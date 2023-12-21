@@ -17,12 +17,17 @@ class mice:
 
     #def mice_animation(self):
     def mice_plotting(self):
-        #x =[self.mice_pos[0]]
-        #y = [self.mice_pos[1]]
+        x = [self.mice_pos[0]]
+        y = [self.mice_pos[1]]
         number=100
         for i in range(number):
-            self.mice_pos.append()
-
+            x.append(np.random.randint(-1,2)+x[-1])
+            y.append(np.random.randint(-1, 2) + y[-1])
+            plt.xlim(0, 100)
+            plt.ylim(0, 100)
+            plt.plot(x,y,color = 'red' if i == 0 else 'blue')
+            plt.pause(0.1)
+        plt.show()
 #main
 obj = mice()
 obj.retrieve('mice.txt')
