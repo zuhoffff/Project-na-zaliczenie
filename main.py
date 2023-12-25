@@ -1,9 +1,7 @@
-import random
-
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
 import numpy as np
 
 class mice:
@@ -21,29 +19,14 @@ class mice:
     def mice_plotting(self):
         x = [self.mice_pos[0]]
         y = [self.mice_pos[1]]
-
-        figure, ax = plt.subplots()
-
-        ax.set_xlim(0,40)
-        ax.set_ylim(0,40)
-
-        line, = ax.plot(0,0)#mb change arguments
-
-        def animation_function(i):#plot get out of the limited space
-            next_x = x[-1] + random.uniform(-1., 1.)
-            next_y = y[-1] + random.uniform(-1., 1.)
-            x.append(next_x)
-            y.append(next_y)
-
-            line.set_xdata(x)
-            line.set_ydata(y)
-            return line,
-
-        animation = FuncAnimation(figure,
-                                  func=animation_function,
-                                  frames=np.arange(0, 10, 0.1),
-                                  interval=50)
-
+        number=100
+        plt.xlim(0, 40)
+        plt.ylim(0, 40)
+        for i in range(number):
+            x.append(np.random.randint(-1,2)+x[-1])
+            y.append(np.random.randint(-1, 2) + y[-1])
+            plt.plot(x,y,color = 'red' if i == 0 else 'blue')
+            plt.pause(0.1)
         plt.show()
 #main
 obj = mice()
