@@ -20,12 +20,16 @@ def generate_points(num_frames):
         x_data[i], y_data[i] = generate_next_point(x_data[i - 1], y_data[i - 1])
     return x_data, y_data
 
-#initial values
+# Number of mice
 mice_num = 3
 num_frames = 100
 
 # Set up the figure and axis
 fig, ax = plt.subplots()
+
+# Initialize arrays
+mice_pos = [generate_points(num_frames) for _ in range(mice_num)]
+lines = [ax.plot([], [], label=f'mouse {i+1}')[0] for i in range(mice_num)]
 
 # Function to initialize the plot
 def init():
@@ -35,28 +39,22 @@ def init():
 
 # Function to update the plot in each animation frame
 def update(frame):
-    lines[frame].set_data(mice_pos[frame][:frame + 1], mice_pos[frame+1][:frame + 1])
-    return lines[frame],
+    for i in range(mice_num):
+        lines[i].set_data(mice_pos[i][0][:frame + 1], mice_pos[i][1][:frame + 1])
+    return tuple(lines)
 
-#initialize arrays
-mice_pos = []
-lines = []
-animations = []
+# Set appropriate axis limits based on the generated data
+x_min = np.min([np.min(mice_pos[i][0]) for i in range(mice_num)])
+x_max = np.max([np.max(mice_pos[i][0]) for i in range(mice_num)])
+y_min = np.min([np.min(mice_pos[i][1]) for i in range(mice_num)])
+y_max = np.max([np.max(mice_pos[i][1]) for i in range(mice_num)])
 
-#main programm
-for i in range (mice_num):
-        mice_pos.append(generate_points(num_frames))
-        lines.append(ax.plot([], [], label=f'mouse {i+1}')[0])
-        #init(i)
+ax.set_xlim(x_min - 1, x_max + 1)
+ax.set_ylim(y_min - 1, y_max + 1)
 
-        # rewrite this part so that global maximum,minimum is determined for all the subplots
-        # x_min, x_max = np.min(mice_pos[-2]), np.max(mice_pos[-1])
-        # y_min, y_max = np.min(mice_pos[-2]), np.max(mice_pos[-1])ax.set_xlim(x_min, x_max)
-        # ax.set_ylim(y_min, y_max)
-        # ax.set_xlim(x_min - 1, x_max + 1)
-        # ax.set_ylim(y_min - 1, y_max + 1)
+# Create animations
+animations = [FuncAnimation(fig, update, frames=num_frames, init_func=init, blit=True) for _ in range(mice_num)]
 
-        animations.append(FuncAnimation(fig, update, frames=num_frames, init_func=init, blit=True))
-        ax.legend()
 # Show the animation
+plt.legend()
 plt.show()
