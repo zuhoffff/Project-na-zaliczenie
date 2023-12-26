@@ -12,10 +12,12 @@ def generate_next_point(x, y):
     new_y = y + distance * np.sin(angle)
     return new_x, new_y
 
-# Generate points
-def generate_points(num_frames):
+# Generate points with random starting coordinates
+def generate_points(num_frames, start_x, start_y):
     x_data = np.zeros(num_frames)
     y_data = np.zeros(num_frames)
+    x_data[0] = start_x
+    y_data[0] = start_y
     for i in range(1, num_frames):
         x_data[i], y_data[i] = generate_next_point(x_data[i - 1], y_data[i - 1])
     return x_data, y_data
@@ -27,8 +29,8 @@ num_frames = 100
 # Set up the figure and axis
 fig, ax = plt.subplots()
 
-# Initialize arrays
-mice_pos = [generate_points(num_frames) for _ in range(mice_num)]
+# Initialize arrays with random starting coordinates
+mice_pos = [generate_points(num_frames, np.random.uniform(-5, 5), np.random.uniform(-5, 5)) for _ in range(mice_num)]
 lines = [ax.plot([], [], label=f'mouse {i+1}')[0] for i in range(mice_num)]
 
 # Function to initialize the plot
