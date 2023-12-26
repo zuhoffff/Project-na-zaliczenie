@@ -12,40 +12,48 @@ def generate_next_point(x, y):
     new_y = y + distance * np.sin(angle)
     return new_x, new_y
 
-# Number of frames (points)
-num_frames = 100
-x_data = np.zeros(num_frames)
-y_data = np.zeros(num_frames)
-
 # Generate points
-for i in range(1, num_frames):
-    x_data[i], y_data[i] = generate_next_point(x_data[i-1], y_data[i-1])
+def generate_points(num_frames):
+    x_data = np.zeros(num_frames)
+    y_data = np.zeros(num_frames)
+    for i in range(1,num_frames):
+        x_data[i], y_data[i] = generate_next_point(x_data[i - 1], y_data[i - 1])
+    return x_data, y_data
+
+#initial values
+mice_num = 3
+num_frames = 100
 
 # Set up the figure and axis
 fig, ax = plt.subplots()
-line, = ax.plot([], [], label='Your Data')
 ax.legend()
 
 # Function to initialize the plot
-def init():
+def init(line):
     line.set_data([], [])
     return line,
 
 # Function to update the plot in each animation frame
 def update(frame):
-    line.set_data(x_data[:frame + 1], y_data[:frame + 1])
-    return line,
+    lines[frame].set_data(mice_pos[frame][:frame + 1], mice_pos[frame+1][:frame + 1])
+    return lines[frame],
 
-# Calculate the range of your data for axis limits
-x_min, x_max = np.min(x_data), np.max(x_data)
-y_min, y_max = np.min(y_data), np.max(y_data)
+#initialize arrays
+mice_pos = []
+lines = []
+animations = []
 
-# Set the axis limits based on the data range
-ax.set_xlim(x_min - 1, x_max + 1)
-ax.set_ylim(y_min - 1, y_max + 1)
+#main programm
+for i in range (mice_num):
+        mice_pos.append(generate_points(num_frames))
+        lines.append(ax.plot([], [], label=f'mouse {i+1}')[0])
+        init(lines[-1])
 
-# Create the animation
-animation = FuncAnimation(fig, update, frames=num_frames, init_func=init, blit=True)
+        # rewrite this part so that global maximum,minimum is determined for all the subpots
+        # x_min, x_max = np.min(mice_pos[-2]), np.max(mice_pos[-1])
+        # y_min, y_max = np.min(mice_pos[-2]), np.max(mice_pos[-1])
+
+        animations.append(FuncAnimation(fig, update, frames=num_frames, init_func=init, blit=True))
 
 # Show the animation
 plt.show()
