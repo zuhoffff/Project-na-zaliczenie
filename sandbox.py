@@ -16,7 +16,7 @@ def generate_next_point(x, y):
 def generate_points(num_frames):
     x_data = np.zeros(num_frames)
     y_data = np.zeros(num_frames)
-    for i in range(1,num_frames):
+    for i in range(1, num_frames):
         x_data[i], y_data[i] = generate_next_point(x_data[i - 1], y_data[i - 1])
     return x_data, y_data
 
@@ -29,9 +29,10 @@ fig, ax = plt.subplots()
 ax.legend()
 
 # Function to initialize the plot
-def init(line):
-    line.set_data([], [])
-    return line,
+def init():
+    for line in lines:
+        line.set_data([], [])
+    return tuple(lines)
 
 # Function to update the plot in each animation frame
 def update(frame):
@@ -47,11 +48,14 @@ animations = []
 for i in range (mice_num):
         mice_pos.append(generate_points(num_frames))
         lines.append(ax.plot([], [], label=f'mouse {i+1}')[0])
-        init(lines[-1])
+        #init(i)
 
-        # rewrite this part so that global maximum,minimum is determined for all the subpots
+        # rewrite this part so that global maximum,minimum is determined for all the subplots
         # x_min, x_max = np.min(mice_pos[-2]), np.max(mice_pos[-1])
-        # y_min, y_max = np.min(mice_pos[-2]), np.max(mice_pos[-1])
+        # y_min, y_max = np.min(mice_pos[-2]), np.max(mice_pos[-1])ax.set_xlim(x_min, x_max)
+        # ax.set_ylim(y_min, y_max)
+        # ax.set_xlim(x_min - 1, x_max + 1)
+        # ax.set_ylim(y_min - 1, y_max + 1)
 
         animations.append(FuncAnimation(fig, update, frames=num_frames, init_func=init, blit=True))
 
