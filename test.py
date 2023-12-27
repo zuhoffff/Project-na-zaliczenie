@@ -5,13 +5,24 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 class Mice:
-    def __init__(self, mice_num, num_frames):
-        self.mice_num = mice_num
+    def __init__(self, file_path, num_frames):
+        self.mice_num = 0
+        self.mice_pos = []
+        self.retrieve()
         self.num_frames = num_frames
         self.fig, self.ax = plt.subplots()
-        self.lines = [self.ax.plot([], [],color='blue', label=f'mouse {i+1}')[0] for i in range(mice_num)]
-        self.mice_pos = [self.generate_points(np.random.uniform(-5, 5), np.random.uniform(-5, 5)) for _ in range(mice_num)]
+        self.lines = [self.ax.plot([], [], color='blue', label=f'mouse {i+1}')[0] for i in range(self.mice_num)]
+        self.mice_pos = [self.generate_points(self.mice_pos[i][0], self.mice_pos[i][1]) for i in range(self.mice_num)]#tuple is immutable!
+        #and the mice_pos is list of tuples of arrays (array is mutalbe structure os the fixed size)
         self.init()
+
+    def retrieve(self):
+        with open(self.file_path, 'r') as file:
+            for line in file:
+                self.mice_num += 1
+                words = line.strip().split()
+                self.mice_pos[0].append(int(words[0].strip()))
+                self.mice_pos[1].append(int(words[1].strip()))
 
     def generate_next_point(self, x, y):
         angle = np.random.uniform(0, 2 * np.pi)
