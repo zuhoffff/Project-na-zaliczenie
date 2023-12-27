@@ -42,19 +42,10 @@ class Mice:
         return tuple(self.lines)
 
     def set_axis(self):
-        x_min = self.mice_pos[0][0]
-        x_max = self.mice_pos[0][0]
-        y_min = self.mice_pos[0][1]
-        y_max = self.mice_pos[0][1]
-        for i in range (self.mice_num):
-            if self.mice_pos[i][0] < x_min:
-                x_min = self.mice_pos[i][0]
-            elif self.mice_pos[i][0] > x_max:
-                x_max = self.mice_pos[i][0]
-            if self.mice_pos[i][1] < y_min:
-                y_min = self.mice_pos[i][1]
-            elif self.mice_pos[i][1] > y_max:
-                y_max = self.mice_pos[i][1]
+        x_min = np.min([np.min(self.mice_pos[i][0]) for i in range(self.mice_num)])
+        x_max = np.max([np.max(self.mice_pos[i][0]) for i in range(self.mice_num)])
+        y_min = np.min([np.min(self.mice_pos[i][1]) for i in range(self.mice_num)])
+        y_max = np.max([np.max(self.mice_pos[i][1]) for i in range(self.mice_num)])
         self.ax.set_xlim(x_min - 1, x_max + 1)
         self.ax.set_ylim(y_min - 1, y_max + 1)
 
