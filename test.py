@@ -23,7 +23,7 @@ def generate_points(num_frames, start_x, start_y):
     return x_data, y_data
 
 # Number of mice
-mice_num = 3
+mice_num = 2
 num_frames = 100
 
 # Set up the figure and axis
@@ -31,7 +31,7 @@ fig, ax = plt.subplots()
 
 # Initialize arrays with random starting coordinates
 mice_pos = [generate_points(num_frames, np.random.uniform(-5, 5), np.random.uniform(-5, 5)) for _ in range(mice_num)]
-lines = [ax.plot([], [], label=f'mouse {i+1}')[0] for i in range(mice_num)]
+lines = [ax.plot([], [],color = 'blue', label=f'mouse {i+1}')[0] for i in range(mice_num)]
 
 # Function to initialize the plot
 def init():
