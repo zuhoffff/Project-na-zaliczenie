@@ -31,7 +31,7 @@ class MiceSimulation:
 
     def init(self):
         # Initialize lines based on the existing mice_pos
-        self.lines = [self.ax.plot([], [], color='blue', label=f'mouse {i+1}')[0] for i in range(len(self.mice_pos))]
+        self.lines = [self.ax.plot([], [], color='blue', label='Mice')[0] for _ in range(len(self.mice_pos))]
         return tuple(self.lines)
 
     def update(self, frame):
@@ -67,8 +67,12 @@ class MiceSimulation:
         return mice_pos
 
     def draw_circles(self):
+        # Create a single label for all circles
+        label = 'Starts'
         # Create circles for each starting point
-        circles = [Circle((mouse[0][0], mouse[1][0]), radius=0.15, color='blue', label='Starting Point') for mouse in self.mice_pos]
+        circles = [Circle((mouse[0][0], mouse[1][0]), radius=0.1, color='red', label=label) for mouse in self.mice_pos]
+        # Set label for all circles
+        self.ax.legend([circles[0]], [label])
         return circles
 
 # Example usage:
