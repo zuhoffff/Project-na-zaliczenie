@@ -10,7 +10,6 @@ class Mice:
         self.num_frames = num_frames
         self.fig, self.ax = plt.subplots()
         self.lines = [self.ax.plot([], [],color='blue', label=f'mouse {i+1}')[0] for i in range(mice_num)]
-        #self.line_color = 'blue'
         self.mice_pos = [self.generate_points(np.random.uniform(-5, 5), np.random.uniform(-5, 5)) for _ in range(mice_num)]
         self.init()
 
@@ -50,7 +49,7 @@ class Mice:
         self.ax.set_ylim(y_min - 1, y_max + 1)
 
     def animate(self):
-        animations = [FuncAnimation(self.fig, self.update, frames=self.num_frames, init_func=self.init, blit=True) for _ in range(self.mice_num)]
+        animations = [FuncAnimation(self.fig, self.update, frames=self.num_frames, init_func=self.init, blit=True, interval = 200) for _ in range(self.mice_num)]
         self.set_axis()
         plt.legend()
         plt.show()
