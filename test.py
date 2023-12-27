@@ -2,6 +2,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
 
 class MiceSimulation:
@@ -9,9 +10,8 @@ class MiceSimulation:
         self.num_frames = num_frames
         self.fig, self.ax = plt.subplots()
         self.lines = []
-        self.mice_pos = []  # Initialize an empty list for mouse positions
-        self.mice_num = 0  # Initialize mice_num
-        self.retrieve(file_path)  # Call retrieve method inside the constructor
+        self.mice_pos = self.retrieve(file_path)  # Call retrieve method inside the constructor
+        self.circles = self.draw_circles()
 
     def generate_next_point(self, x, y):
         angle = np.random.uniform(0, 2 * np.pi)
@@ -21,21 +21,21 @@ class MiceSimulation:
         return new_x, new_y
 
     def generate_points(self, start_x, start_y):
-        x_data = np.zeros(self.num_frames)
-        y_data = np.zeros(self.num_frames)
-        x_data[0] = start_x
-        y_data[0] = start_y
-        for i in range(1, self.num_frames):
-            x_data[i], y_data[i] = self.generate_next_point(x_data[i - 1], y_data[i - 1])
+        x_data = [start_x]
+        y_data = [start_y]
+        for _ in range(1, self.num_frames):
+            x, y = self.generate_next_point(x_data[-1], y_data[-1])
+            x_data.append(x)
+            y_data.append(y)
         return x_data, y_data
 
     def init(self):
         # Initialize lines based on the existing mice_pos
-        self.lines = [self.ax.plot([], [], color='blue', label=f'mouse {i+1}')[0] for i in range(self.mice_num)]
+        self.lines = [self.ax.plot([], [], color='blue', label=f'mouse {i+1}')[0] for i in range(len(self.mice_pos))]
         return tuple(self.lines)
 
     def update(self, frame):
-        for i in range(self.mice_num):
+        for i in range(len(self.mice_pos)):
             self.lines[i].set_data(self.mice_pos[i][0][:frame + 1], self.mice_pos[i][1][:frame + 1])
         return tuple(self.lines)
 
@@ -48,19 +48,28 @@ class MiceSimulation:
         self.ax.set_ylim(y_min - 1, y_max + 1)
 
     def animate(self):
-        animations = [FuncAnimation(self.fig, self.update, frames=self.num_frames, init_func=self.init, blit=True, interval=200)]
         self.set_axis()
+        # Draw circles before the animation
+        for circle in self.circles:
+            self.ax.add_patch(circle)
+        animations = [FuncAnimation(self.fig, self.update, frames=self.num_frames, init_func=self.init, blit=True, interval=200)]
         plt.legend()
         plt.show()
 
     def retrieve(self, file_path):
+        mice_pos = []
         with open(file_path, 'r') as file:
             for line in file:
                 words = line.strip().split()
                 start_x, start_y = float(words[0]), float(words[1])
                 # Add the initial point for each mouse to mice_pos
-                self.mice_pos.append(self.generate_points(start_x, start_y))
-        self.mice_num = len(self.mice_pos)
+                mice_pos.append(self.generate_points(start_x, start_y))
+        return mice_pos
+
+    def draw_circles(self):
+        # Create circles for each starting point
+        circles = [Circle((mouse[0][0], mouse[1][0]), radius=0.15, color='blue', label='Starting Point') for mouse in self.mice_pos]
+        return circles
 
 # Example usage:
 mice_simulation = MiceSimulation(file_path='mice.txt', num_frames=100)
