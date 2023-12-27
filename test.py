@@ -4,25 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-class Mice:
+class MiceSimulation:
     def __init__(self, file_path, num_frames):
-        self.mice_num = 0
-        self.mice_pos = []
-        self.retrieve()
         self.num_frames = num_frames
         self.fig, self.ax = plt.subplots()
-        self.lines = [self.ax.plot([], [], color='blue', label=f'mouse {i+1}')[0] for i in range(self.mice_num)]
-        self.mice_pos = [self.generate_points(self.mice_pos[i][0], self.mice_pos[i][1]) for i in range(self.mice_num)]#tuple is immutable!
-        #and the mice_pos is list of tuples of arrays (array is mutalbe structure os the fixed size)
-        self.init()
-
-    def retrieve(self):
-        with open(self.file_path, 'r') as file:
-            for line in file:
-                self.mice_num += 1
-                words = line.strip().split()
-                self.mice_pos[0].append(int(words[0].strip()))
-                self.mice_pos[1].append(int(words[1].strip()))
+        self.lines = []
+        self.mice_pos = []  # Initialize an empty list for mouse positions
+        self.mice_num = 0  # Initialize mice_num
+        self.retrieve(file_path)  # Call retrieve method inside the constructor
 
     def generate_next_point(self, x, y):
         angle = np.random.uniform(0, 2 * np.pi)
@@ -41,10 +30,9 @@ class Mice:
         return x_data, y_data
 
     def init(self):
-        for line in self.lines:
-            line.set_data([], [])
+        # Initialize lines based on the existing mice_pos
+        self.lines = [self.ax.plot([], [], color='blue', label=f'mouse {i+1}')[0] for i in range(self.mice_num)]
         return tuple(self.lines)
-        #self.ax.legend()
 
     def update(self, frame):
         for i in range(self.mice_num):
@@ -52,21 +40,28 @@ class Mice:
         return tuple(self.lines)
 
     def set_axis(self):
-        x_min = np.min([np.min(self.mice_pos[i][0]) for i in range(self.mice_num)])
-        x_max = np.max([np.max(self.mice_pos[i][0]) for i in range(self.mice_num)])
-        y_min = np.min([np.min(self.mice_pos[i][1]) for i in range(self.mice_num)])
-        y_max = np.max([np.max(self.mice_pos[i][1]) for i in range(self.mice_num)])
+        x_min = np.min([np.min(mouse[0]) for mouse in self.mice_pos])
+        x_max = np.max([np.max(mouse[0]) for mouse in self.mice_pos])
+        y_min = np.min([np.min(mouse[1]) for mouse in self.mice_pos])
+        y_max = np.max([np.max(mouse[1]) for mouse in self.mice_pos])
         self.ax.set_xlim(x_min - 1, x_max + 1)
         self.ax.set_ylim(y_min - 1, y_max + 1)
 
     def animate(self):
-        animations = [FuncAnimation(self.fig, self.update, frames=self.num_frames, init_func=self.init, blit=True, interval = 200) for _ in range(self.mice_num)]
+        animations = [FuncAnimation(self.fig, self.update, frames=self.num_frames, init_func=self.init, blit=True, interval=200)]
         self.set_axis()
         plt.legend()
         plt.show()
 
-# Create an instance of the Mice class
-mice_simulation = Mice(mice_num=3, num_frames=100)
+    def retrieve(self, file_path):
+        with open(file_path, 'r') as file:
+            for line in file:
+                words = line.strip().split()
+                start_x, start_y = float(words[0]), float(words[1])
+                # Add the initial point for each mouse to mice_pos
+                self.mice_pos.append(self.generate_points(start_x, start_y))
+        self.mice_num = len(self.mice_pos)
 
-# Run the animation
+# Example usage:
+mice_simulation = MiceSimulation(file_path='mice.txt', num_frames=100)
 mice_simulation.animate()
