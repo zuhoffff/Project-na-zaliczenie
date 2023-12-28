@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
 
-class MiceSimulation:
-    def __init__(self, file_path, num_frames):
-        self.num_frames = num_frames
+class Simulation:
+    def __init__(self, num_frames):
         self.fig, self.ax = plt.subplots()
+        self.num_frames = num_frames
         self.lines = []
-        self.mice_pos = self.retrieve(file_path)  # Call retrieve method inside the constructor
-        self.circles = self.draw_circles()
+        mice = Mice('mice.txt')
+        average_cats = Average_cats('av_cats.txt')
 
     def generate_next_point(self, x, y):
         angle = np.random.uniform(0, 2 * np.pi)
@@ -20,14 +20,24 @@ class MiceSimulation:
         new_y = y + distance * np.sin(angle)
         return new_x, new_y
 
-    def generate_points(self, start_x, start_y):
-        x_data = [start_x]
-        y_data = [start_y]
-        for _ in range(1, self.num_frames):
-            x, y = self.generate_next_point(x_data[-1], y_data[-1])
-            x_data.append(x)
-            y_data.append(y)
-        return x_data, y_data
+    def retrieve(self, file_path):
+        mice_pos = []
+        with open(file_path, 'r') as file:
+            for line in file:
+                words = line.strip().split()
+                point = [float(words[0]), float(words[1])]
+                self.mice_start.append(point)
+    def animate(self):
+        for i in range (self.num_frames):
+
+
+
+class Mice:
+    def __init__(self, file_path):
+        self.mice_start = []
+        self.retrieve(file_path)  # Call retrieve method inside the constructor
+        self.draw_circles()
+
 
     def init(self):
         # Initialize lines based on the existing mice_pos
@@ -56,25 +66,20 @@ class MiceSimulation:
         plt.legend()
         plt.show()
 
-    def retrieve(self, file_path):
-        mice_pos = []
-        with open(file_path, 'r') as file:
-            for line in file:
-                words = line.strip().split()
-                start_x, start_y = float(words[0]), float(words[1])
-                # Add the initial point for each mouse to mice_pos
-                mice_pos.append(self.generate_points(start_x, start_y))
-        return mice_pos
-
     def draw_circles(self):
         # Create a single label for all circles
         label = 'Starts'
         # Create circles for each starting point
-        circles = [Circle((mouse[0][0], mouse[1][0]), radius=0.1, color='red', label=label) for mouse in self.mice_pos]
+        self.circles = [Circle((point[0], point[1]), radius=0.1, color='red', label=label) for point in self.mice_start]
         # Set label for all circles
-        self.ax.legend([circles[0]], [label])
-        return circles
+        self.ax.legend([self.circles[0]], [label])
+
+class Average_cats(Mice):
+
+class Lazy_cats():
+
+class Kittens():
 
 # Example usage:
-mice_simulation = MiceSimulation(file_path='mice.txt', num_frames=100)
+mice_simulation = Mice(file_path='mice.txt', num_frames=100)
 mice_simulation.animate()
