@@ -10,42 +10,54 @@ class Simulation:
         self.fig, self.ax = plt.subplots()
         self.num_frames = num_frames
         self.lines = []
-        mice = Mice('mice.txt')
-        average_cats = Average_cats('av_cats.txt')
+        self.mice = Mice('mice.txt')
+        self.average_cats = Average_cats('av_cats.txt')
 
-    def generate_next_point(self, x, y):
+    def generate_next_point(x, y):
         angle = np.random.uniform(0, 2 * np.pi)
         distance = np.random.uniform(0, 1)
         new_x = x + distance * np.cos(angle)
         new_y = y + distance * np.sin(angle)
         return new_x, new_y
 
-    def retrieve(self, file_path):
-        mice_pos = []
+    def retrieve(file_path): #return 2d list of start points retrieved from file
+        number = 0
+        start = []
         with open(file_path, 'r') as file:
             for line in file:
+                number += 1
                 words = line.strip().split()
                 point = [float(words[0]), float(words[1])]
-                self.mice_start.append(point)
-    def animate(self):
+                start.append(point)
+        return start, number
+
+    def render_and_animate(self):
+
+        #loop to iterate through the frames
         for i in range (self.num_frames):
+
+                #loop iteration through anumals
+                for animal in range():
 
 
 
 class Mice:
     def __init__(self, file_path):
         self.mice_start = []
+        self.mice_num = 0
         self.retrieve(file_path)  # Call retrieve method inside the constructor
         self.draw_circles()
+        self.lines = []
+        self.mice_pos = []
 
 
     def init(self):
         # Initialize lines based on the existing mice_pos
-        self.lines = [self.ax.plot([], [], color='blue', label='Mice')[0] for _ in range(len(self.mice_pos))]
+        self.lines = [plt.plot([], [], color='blue', label='Mice')[0] for _ in range(self.mice_num)]
         return tuple(self.lines)
 
     def update(self, frame):
-        for i in range(len(self.mice_pos)):
+        for i in range(self.mice_num):
             self.lines[i].set_data(self.mice_pos[i][0][:frame + 1], self.mice_pos[i][1][:frame + 1])
         return tuple(self.lines)
 
@@ -76,10 +88,8 @@ class Mice:
 
 class Average_cats(Mice):
 
-class Lazy_cats():
-
-class Kittens():
+# class Lazy_cats():
+#
+# class Kittens():
 
 # Example usage:
-mice_simulation = Mice(file_path='mice.txt', num_frames=100)
-mice_simulation.animate()
