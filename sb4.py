@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Qt5Agg')  # Use TkAgg backend or another one that works for you
+matplotlib.use('Qt5Agg')  # Use Qt5Agg backend or another one that works for you
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -9,7 +9,7 @@ class Animal:
     def __init__(self, file_path, color, label):
         self.start_positions, self.num_animals = self.retrieve(file_path)
         self.positions = [np.array(self.start_positions[i]).reshape(-1, 2) for i in range(self.num_animals)]
-        self.lines = [plt.plot([], [], color=color, label=label)[0] for _ in range(self.num_animals)]
+        self.lines = [plt.plot([], [], color=color, label=f'{label} {i+1}')[0] for i in range(self.num_animals)]
 
     def retrieve(self, file_path):
         number = 0
@@ -35,18 +35,10 @@ class Animal:
             self.lines[i].set_data(self.positions[i][:, 0], self.positions[i][:, 1])
         return tuple(self.lines)
 
-class Mice(Animal):
-    def __init__(self, file_path):
-        super().__init__(file_path, color='blue', label='Mice')
-
-class AverageCats(Animal):
-    def __init__(self, file_path):
-        super().__init__(file_path, color='red', label='Average Cats')
-
 def main():
     num_frames = 100
-    mice = Mice('mice.txt')
-    average_cats = AverageCats('av_cats.txt')
+    mice = Animal('mice.txt', color='blue', label='Mice')
+    average_cats = Animal('average_cats.txt', color='red', label='Average Cats')
 
     fig, ax = plt.subplots()
     animals = [mice, average_cats]
@@ -62,11 +54,14 @@ def main():
             animal.update(frame)
         return tuple(line for animal in animals for line in animal.lines)
 
-    plt.legend()
     plt.xlim(-10, 10)
     plt.ylim(-10, 10)
 
+    for animal in animals:
+        ax.add_patch(Circle((animal.start_positions[0][0], animal.start_positions[0][1]), radius=0.1, color=animal.lines[0].get_color(), label=animal.lines[0].get_label()))
+
     animation = FuncAnimation(fig, animate, frames=num_frames, init_func=init, blit=True, interval=200)
+    ax.legend()
     plt.show()
 
 if __name__ == "__main__":
