@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Qt5Agg')  # Use Qt5Agg backend or another one that works for you
+matplotlib.use('Qt5Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -8,7 +8,6 @@ from matplotlib.animation import FuncAnimation
 class Animal:
     def __init__(self, file_path, color, label):
         self.start_positions, self.num_animals = self.retrieve(file_path)
-        self.positions = [np.array(self.start_positions[i]).reshape(-1, 2) for i in range(self.num_animals)]
         self.lines = [plt.plot([], [], color=color, label=f'{label} {i+1}')[0] for i in range(self.num_animals)]
 
     def retrieve(self, file_path):
@@ -31,7 +30,8 @@ class Animal:
 
     def update(self, frame):
         for i in range(self.num_animals):
-            self.positions[i] = np.vstack([self.positions[i], self.generate_next_point(self.positions[i][-1, 0], self.positions[i][-1, 1], 1.0)])
+            new_point = self.generate_next_point(self.positions[i][-1, 0], self.positions[i][-1, 1], 1.0)
+            self.positions[i] = np.vstack([self.positions[i], new_point])
             self.lines[i].set_data(self.positions[i][:, 0], self.positions[i][:, 1])
         return tuple(self.lines)
 
