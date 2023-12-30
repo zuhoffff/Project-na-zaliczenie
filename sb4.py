@@ -12,27 +12,30 @@ class Creature:
         self.max_distance = max_distance
         self.num = len(self.positions[0])
 
-    def retrieve(file_path):
-        start_positions = []
+    def retrieve(self, file_path):
+        start_pos = []
         with open(file_path, 'r') as file:
             for line in file:
                 words = line.strip().split()
-                start_position = [float(words[0]), float(words[1])]
-                start_positions.append(start_position)
-        return start_positions
+                start_position = np.array([float(words[0]), float(words[1])])
+                start_pos.append(start_position)
+        return start_pos
 
     def generate_next_point(self, x, y):
         angle = np.random.uniform(0, 2 * np.pi)
         distance = np.random.uniform(0, self.max_distance)
         new_x = x + distance * np.cos(angle)
         new_y = y + distance * np.sin(angle)
-        return new_x, new_y
+        new_point = np.array([new_x, new_y])
+        return new_point
 
     def generate_points(self):
         next_positions = []
-        for i in range(1, self.num):
-            next_position = self.generate_next_point(self.positions[-1][i]) #self.positions[-1][i][0], self.poitions[-1][i][1]
-            next_positions.append(next_position)
+        for i in range(self.num):
+            x = self.positions[-1][i][0]
+            y = self.positions[-1][i][1]
+            next_pos = self.generate_next_point(x, y)
+            next_positions.append(next_pos)
         self.positions.append(next_positions)
 
 class Mouse(Creature):
@@ -49,18 +52,28 @@ class Simulation:
         self.fig, self.ax = plt.subplots()
         self.mice = Mouse()
         self.cats = Cat()
+        self.render_point()
 
     def render_point(self):
         #iterate through frames
-        for i in range(self.num_frames):
+        for i in range(1, self.num_frames-1):
             self.mice.generate_points()
             self.cats.generate_points()
 
-
+            # Check for proximity and reset positions of mice if necessary
+            # distance = np.linalg.norm(mouse - cat) #calculating the normal
+            for index, mouse in enumerate(self.mice.positions[i]): #index represents the current mouse
+                for cat in self.cats.positions[i]:
+                    distance = np.linalg.norm(mouse - cat)
+                    if distance <= 3:
+                        self.mice.positions[i][index] = self.mice.positions[0][index] #positions[+1] not yet created, so for pilot version it's i
+        print(self.mice.positions)
+        print()
+        print(self.cats.positions)
 
 def main():
     simulation = Simulation(num_frames=100)
-    simulation.animate()
+    #simulation.animate()
 
 if __name__ == '__main__':
     main()
