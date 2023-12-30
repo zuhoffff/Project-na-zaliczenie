@@ -5,64 +5,62 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
 
-class Animal:
-    def __init__(self, file_path, color, label):
-        self.start_positions, self.num_animals = self.retrieve(file_path)
-        self.lines = [plt.plot([], [], color=color, label=f'{label} {i+1}')[0] for i in range(self.num_animals)]
+class Creature:
+    def __init__(self, file_path, max_distance):
+        self.positions = []
+        self.positions.append(self.retrieve(file_path))
+        self.max_distance = max_distance
+        self.num = len(self.positions[0])
 
-    def retrieve(self, file_path):
-        number = 0
-        start = []
+    def retrieve(file_path):
+        start_positions = []
         with open(file_path, 'r') as file:
             for line in file:
-                number += 1
                 words = line.strip().split()
-                point = [float(words[0]), float(words[1])]
-                start.append(point)
-        return start, number
+                start_position = [float(words[0]), float(words[1])]
+                start_positions.append(start_position)
+        return start_positions
 
-    def generate_next_point(self, x, y, max_distance):
+    def generate_next_point(self, x, y):
         angle = np.random.uniform(0, 2 * np.pi)
-        distance = np.random.uniform(0, max_distance)
+        distance = np.random.uniform(0, self.max_distance)
         new_x = x + distance * np.cos(angle)
         new_y = y + distance * np.sin(angle)
         return new_x, new_y
 
-    def update(self, frame):
-        for i in range(self.num_animals):
-            new_point = self.generate_next_point(self.positions[i][-1, 0], self.positions[i][-1, 1], 1.0)
-            self.positions[i] = np.vstack([self.positions[i], new_point])
-            self.lines[i].set_data(self.positions[i][:, 0], self.positions[i][:, 1])
-        return tuple(self.lines)
+    def generate_points(self):
+        next_positions = []
+        for i in range(1, self.num):
+            next_position = self.generate_next_point(self.positions[-1][i]) #self.positions[-1][i][0], self.poitions[-1][i][1]
+            next_positions.append(next_position)
+        self.positions.append(next_positions)
+
+class Mouse(Creature):
+    def __init__(self, file_path='mice.txt', max_distance=1):
+        super().__init__(file_path, max_distance)
+
+class Cat(Creature):
+    def __init__(self, file_path='average_cats.txt', max_distance=10):
+        super().__init__(file_path, max_distance)
+
+class Simulation:
+    def __init__(self, num_frames):
+        self.num_frames = num_frames
+        self.fig, self.ax = plt.subplots()
+        self.mice = Mouse()
+        self.cats = Cat()
+
+    def render_point(self):
+        #iterate through frames
+        for i in range(self.num_frames):
+            self.mice.generate_points()
+            self.cats.generate_points()
+
+
 
 def main():
-    num_frames = 100
-    mice = Animal('mice.txt', color='blue', label='Mice')
-    average_cats = Animal('average_cats.txt', color='red', label='Average Cats')
+    simulation = Simulation(num_frames=100)
+    simulation.animate()
 
-    fig, ax = plt.subplots()
-    animals = [mice, average_cats]
-
-    def init():
-        for animal in animals:
-            for line in animal.lines:
-                line.set_data([], [])
-        return tuple(line for animal in animals for line in animal.lines)
-
-    def animate(frame):
-        for animal in animals:
-            animal.update(frame)
-        return tuple(line for animal in animals for line in animal.lines)
-
-    plt.xlim(-10, 10)
-    plt.ylim(-10, 10)
-
-    for animal in animals:
-        ax.add_patch(Circle((animal.start_positions[0][0], animal.start_positions[0][1]), radius=0.1, color=animal.lines[0].get_color(), label=animal.lines[0].get_label()))
-
-    animation = FuncAnimation(fig, animate, frames=num_frames, init_func=init, blit=True, interval=200)
-    ax.legend()
-    plt.show()
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
