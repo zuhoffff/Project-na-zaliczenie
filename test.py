@@ -7,7 +7,7 @@ from matplotlib.animation import FuncAnimation
 
 class Creature:
     def __init__(self, file_path, max_distance):
-        self.start_positions = self.retrieve(file_path) #is the separete start_positions actually required?
+        self.start_positions = self.retrieve(file_path) #are the separete start_positions actually required?
         self.positions = []
         self.max_distance = max_distance
         self.num = len(self.start_positions)
@@ -19,7 +19,6 @@ class Creature:
                 position = [float(words[0]), float(words[1])]
                 positions.append(position)
         return positions
-
     def generate_next_point(self, x, y):
         angle = np.random.uniform(0, 2 * np.pi)
         distance = np.random.uniform(0, self.max_distance)
