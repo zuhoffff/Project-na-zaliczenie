@@ -53,6 +53,8 @@ class Simulation:
         self.mice = Mouse()
         self.cats = Cat()
         self.render_point()
+        self.mice_lines = []
+        self.cats_lines = []
 
     def render_point(self):
         #iterate through frames
@@ -67,13 +69,46 @@ class Simulation:
                     distance = np.linalg.norm(mouse - cat)
                     if distance <= 3:
                         self.mice.positions[i][index] = self.mice.positions[0][index] #positions[+1] not yet created, so for pilot version it's i
-        print(self.mice.positions)
-        print()
-        print(self.cats.positions)
+
+    def init_mice(self): #it d be better to init different creatures separately, also labels need to be repaired
+        self.mice_lines = [self.ax.plot([], [], color='blue', label='Mice')[0] for _ in range(self.mice.num)]
+        return tuple(self.mice_lines)
+
+    def init_cats(self): #it d be better to init different creatures separately, also labels need to be repaired
+        self.cats_lines = [self.ax.plot([], [], color='red', label='Cats')[0] for _ in range(self.cats.num)]
+        return tuple(self.cats_lines)
+
+    def update_mice(self, frame):
+        frames_x = []
+        frames_y = []
+        for i in range(self.mice.num):
+            frames_x.append(self.mice.positions[frame][i][0])
+            frames_y.append(self.mice.positions[frame][i][1])
+            self.mice_lines[i].set_data(frames_x, frames_y)
+        return tuple(self.mice_lines)
+
+    def update_cats(self, frame):
+        frames_x = []
+        frames_y = []
+        for i in range(self.cats.num):
+            frames_x.append(self.cats.positions[frame][i][0])
+            frames_y.append(self.cats.positions[frame][i][1])
+            self.cats_lines[i].set_data(frames_x, frames_y)
+        return tuple(self.mice_lines)
+
+    def animate(self):
+        self.ax.set_xlim(0, 100)
+        self.ax.set_ylim(0, 100)
+        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=True, interval=200)]
+        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=True, interval=200)]
+        plt.legend()
+        plt.show()
+
+    # def set_axis(self):
 
 def main():
     simulation = Simulation(num_frames=100)
-    #simulation.animate()
+    simulation.animate()
 
 if __name__ == '__main__':
     main()
