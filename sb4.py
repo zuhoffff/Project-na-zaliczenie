@@ -79,22 +79,14 @@ class Simulation:
         return tuple(self.cats_lines)
 
     def update_mice(self, frame):
-        frames_x = []
-        frames_y = []
         for i in range(self.mice.num):
-            frames_x.append(self.mice.positions[frame][i][0])
-            frames_y.append(self.mice.positions[frame][i][1])
-            self.mice_lines[i].set_data(frames_x, frames_y)
+            self.mice_lines[i].set_data(self.mice.positions[:frame+1][i][0], self.mice.positions[:frame+1][i][1])
         return tuple(self.mice_lines)
 
     def update_cats(self, frame):
-        frames_x = []
-        frames_y = []
         for i in range(self.cats.num):
-            frames_x.append(self.cats.positions[frame][i][0])
-            frames_y.append(self.cats.positions[frame][i][1])
-            self.cats_lines[i].set_data(frames_x, frames_y)
-        return tuple(self.mice_lines)
+            self.cats_lines[i].set_data(self.cats.positions[:frame+1][i][0], self.cats.positions[:frame+1][i][1])
+        return tuple(self.cats_lines)
 
     def animate(self):
         self.ax.set_xlim(0, 100)
