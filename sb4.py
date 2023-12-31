@@ -17,7 +17,7 @@ class Creature:
         with open(file_path, 'r') as file:
             for line in file:
                 words = line.strip().split()
-                start_position = np.array([float(words[0]), float(words[1])])
+                start_position = [float(words[0]), float(words[1])]
                 start_pos.append(start_position)
         return start_pos
 
@@ -26,7 +26,7 @@ class Creature:
         distance = np.random.uniform(0, self.max_distance)
         new_x = x + distance * np.cos(angle)
         new_y = y + distance * np.sin(angle)
-        new_point = np.array([new_x, new_y])
+        new_point = [new_x, new_y]
         return new_point
 
     def generate_points(self):
@@ -66,7 +66,9 @@ class Simulation:
             # distance = np.linalg.norm(mouse - cat) #calculating the normal
             for index, mouse in enumerate(self.mice.positions[i]): #index represents the current mouse
                 for cat in self.cats.positions[i]:
-                    distance = np.linalg.norm(mouse - cat)
+                    mouse_arr = np.array(mouse)
+                    cat_arr = np.array(cat)
+                    distance = np.linalg.norm(mouse_arr - cat_arr)
                     if distance <= 3:
                         self.mice.positions[i][index] = self.mice.positions[0][index] #positions[+1] not yet created, so for pilot version it's i
 
@@ -91,9 +93,9 @@ class Simulation:
     def animate(self):
         self.ax.set_xlim(0, 100)
         self.ax.set_ylim(0, 100)
-        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=True, interval=200)]
-        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=True, interval=200)]
-        plt.legend()
+        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=False, interval=200)]
+        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=False, interval=200)]
+        self.ax.legend()
         plt.show()
 
     # def set_axis(self):
