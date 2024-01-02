@@ -2,6 +2,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
 
 class Creature:
@@ -16,7 +17,7 @@ class Creature:
         with open(file_path, 'r') as file:
             for line in file:
                 words = line.strip().split()
-                start_position = tuple([float(words[0]), float(words[1])])
+                start_position = [float(words[0]), float(words[1])]
                 start_pos.append(start_position)
         return start_pos
 
@@ -25,7 +26,7 @@ class Creature:
         distance = np.random.uniform(0, self.max_distance)
         new_x = x + distance * np.cos(angle)
         new_y = y + distance * np.sin(angle)
-        new_point = tuple([new_x, new_y])
+        new_point = [new_x, new_y]
         return new_point
 
     def generate_points(self):
@@ -57,7 +58,7 @@ class Simulation:
 
     def render_point(self):
         #iterate through frames
-        for i in range(1, self.num_frames-1):
+        for i in range(1, self.num_frames):
             self.mice.generate_points()
             self.cats.generate_points()
 
@@ -71,24 +72,32 @@ class Simulation:
                     if distance <= 3:
                         self.mice.positions[i][index] = self.mice.positions[0][index] #positions[+1] not yet created, so for pilot version it's i
 
-    def init(self):
+    def init_mice(self): #it d be better to init different creatures separately, also labels need to be repaired
         self.mice_lines = [self.ax.plot([], [], color='blue', label='Mice')[0] for _ in range(self.mice.num)]
+        return tuple(self.mice_lines)
 
+    def init_cats(self): #it d be better to init different creatures separately, also labels need to be repaired
         self.cats_lines = [self.ax.plot([], [], color='red', label='Cats')[0] for _ in range(self.cats.num)]
-        return tuple(self.mice_lines + self.cats_lines)
+        return tuple(self.cats_lines)
 
-    def update(self, frame):
+    def update_mice(self, frame):
         for i in range(self.mice.num):
-            self.mice_lines[i].set_data(self.mice.positions[:frame+1][i][0], self.mice.positions[:frame+1][i][1])
+            positions = np.array(self.mice.positions)
+            self.mice_lines[i].set_data(positions[:frame+1, i, 0], positions[:frame+1, i, 1])
+        return tuple(self.mice_lines)
+
+    def update_cats(self, frame):
         for i in range(self.cats.num):
-            self.cats_lines[i].set_data(self.cats.positions[:frame+1][i][0], self.cats.positions[:frame+1][i][1])
-        return tuple(self.mice_lines + self.cats_lines)
+            positions = np.array(self.cats.positions)
+            self.cats_lines[i].set_data(positions[:frame+1, i, 0], positions[:frame+1, i, 1])
+        return tuple(self.cats_lines)
 
     def animate(self):
         self.ax.set_xlim(0, 100)
         self.ax.set_ylim(0, 100)
-        animations = [FuncAnimation(self.fig, self.update, frames=self.num_frames, init_func=self.init, blit=True, interval=200)]
-        plt.legend()
+        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=True, interval=200)]
+        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=True, interval=200)]
+        # plt.legend()
         plt.show()
 
     # def set_axis(self):
