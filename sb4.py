@@ -93,14 +93,25 @@ class Simulation:
         return tuple(self.cats_lines)
 
     def animate(self):
-        self.ax.set_xlim(0, 60)
-        self.ax.set_ylim(0, 60)
-        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=False, interval=700)]
-        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=False, interval=700)]
+        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=False, interval=200)]
+        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=False, interval=200)]
         # plt.legend()
+        self.set_axis()
         plt.show()
 
-    # def set_axis(self):
+    def set_axis(self):
+        # Extract all positions of mice and cats
+        all_positions = self.mice.positions + self.cats.positions
+
+        # Find the minimum and maximum values in x and y directions
+        min_x = min(point[0] for frame_positions in all_positions for point in frame_positions)
+        max_x = max(point[0] for frame_positions in all_positions for point in frame_positions)
+        min_y = min(point[1] for frame_positions in all_positions for point in frame_positions)
+        max_y = max(point[1] for frame_positions in all_positions for point in frame_positions)
+
+        # Set the axis limits based on the min and max values
+        self.ax.set_xlim(min_x - 5, max_x + 5)
+        self.ax.set_ylim(min_y - 5, max_y + 5)
 
 def main():
     simulation = Simulation(num_frames=100)
