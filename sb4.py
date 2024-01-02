@@ -39,7 +39,7 @@ class Creature:
         self.positions.append(next_positions)
 
 class Mouse(Creature):
-    def __init__(self, file_path='mice.txt', max_distance=1):
+    def __init__(self, file_path='mice.txt', max_distance=5):
         super().__init__(file_path, max_distance)
 
 class Cat(Creature):
@@ -93,10 +93,10 @@ class Simulation:
         return tuple(self.cats_lines)
 
     def animate(self):
-        self.ax.set_xlim(0, 100)
-        self.ax.set_ylim(0, 100)
-        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=True, interval=200)]
-        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=True, interval=200)]
+        self.ax.set_xlim(0, 60)
+        self.ax.set_ylim(0, 60)
+        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=False, interval=700)]
+        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=False, interval=700)]
         # plt.legend()
         plt.show()
 
