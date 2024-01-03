@@ -42,8 +42,9 @@ class Mouse(Creature):
     def __init__(self, file_path='mice.txt', max_distance=2):
         super().__init__(file_path, max_distance)
 
+#TODO: create classes for all types of cats
 class Cat(Creature):
-    def __init__(self, file_path='average_cats.txt', max_distance=10):
+    def __init__(self, file_path='average_cats.txt', max_distance=2):
         super().__init__(file_path, max_distance)
 
 class Simulation:
@@ -65,12 +66,15 @@ class Simulation:
 
             # Check for proximity and reset positions of mice if necessary
             # distance = np.linalg.norm(mouse - cat) #calculating the normal
-            for index, mouse in enumerate(self.mice.positions[i]): #index represents the current mouse
+            for index, mouse in enumerate(self.mice.positions[i]):
+                #index represents the current mouse
                 for cat in self.cats.positions[i]:
                     mouse_arr = np.array(mouse)
                     cat_arr = np.array(cat)
                     distance = np.linalg.norm(mouse_arr - cat_arr)
                     if distance <= 10:
+
+                        # TODO: Set next point to start or even sever the chain to a new one (DONE: teleportation line is invisible)
                         self.mice.positions[i][index] = self.mice.positions[0][index] #positions[+1] not yet created, so for pilot version it's i
 
     def init_mice(self): #it d be better to init different creatures separately, also labels need to be repaired
@@ -83,6 +87,9 @@ class Simulation:
 
     def update_mice(self, frame):
         for i in range(self.mice.num):
+            if (frame > 0 and self.mice.positions[frame][i] == self.mice.positions[0][i]):
+                self.mice_lines[i].set_data([],[])
+                continue
             positions = np.array(self.mice.positions)
             self.mice_lines[i].set_data(positions[:frame+1, i, 0], positions[:frame+1, i, 1])
         return tuple(self.mice_lines)
