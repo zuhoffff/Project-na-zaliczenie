@@ -39,7 +39,7 @@ class Creature:
         self.positions.append(next_positions)
 
 class Mouse(Creature):
-    def __init__(self, file_path='mice.txt', max_distance=5):
+    def __init__(self, file_path='mice.txt', max_distance=2):
         super().__init__(file_path, max_distance)
 
 class Cat(Creature):
@@ -55,6 +55,7 @@ class Simulation:
         self.render_point()
         self.mice_lines = []
         self.cats_lines = []
+        self.circles = self.draw_circles()
 
     def render_point(self):
         #iterate through frames
@@ -69,7 +70,7 @@ class Simulation:
                     mouse_arr = np.array(mouse)
                     cat_arr = np.array(cat)
                     distance = np.linalg.norm(mouse_arr - cat_arr)
-                    if distance <= 3:
+                    if distance <= 10:
                         self.mice.positions[i][index] = self.mice.positions[0][index] #positions[+1] not yet created, so for pilot version it's i
 
     def init_mice(self): #it d be better to init different creatures separately, also labels need to be repaired
@@ -93,8 +94,10 @@ class Simulation:
         return tuple(self.cats_lines)
 
     def animate(self):
-        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=False, interval=200)]
-        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=False, interval=200)]
+        for circle in self.circles:
+            self.ax.add_patch(circle)
+        cat_anim = [FuncAnimation(self.fig, self.update_mice, frames=self.num_frames, init_func=self.init_mice, blit=False, interval=300)]
+        mouse_anim = [FuncAnimation(self.fig, self.update_cats, frames=self.num_frames, init_func=self.init_cats, blit=False, interval=300)]
         # plt.legend()
         self.set_axis()
         plt.show()
@@ -112,6 +115,11 @@ class Simulation:
         # Set the axis limits based on the min and max values
         self.ax.set_xlim(min_x - 5, max_x + 5)
         self.ax.set_ylim(min_y - 5, max_y + 5)
+
+    def draw_circles(self):
+        # Create circles for each starting point
+        circles = [Circle((mouse[0], mouse[1]), radius=0.4, color='blue', label='Starting Point') for mouse in self.mice.positions[0]]
+        return circles
 
 def main():
     simulation = Simulation(num_frames=100)
