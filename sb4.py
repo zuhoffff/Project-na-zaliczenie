@@ -33,6 +33,19 @@ class Creature:
     def generate_points(self):
         next_positions = []
         for i in range(self.num):
+            y = self.positions[-1][i][1]
+            x = self.positions[-1][i][0]
+            next_pos = self.generate_next_point(x, y)
+            next_positions.append(next_pos)
+        self.positions.append(next_positions)
+
+class Mouse(Creature):
+    def __init__(self, file_path='mice.txt', max_distance=2):
+        super().__init__(file_path, max_distance)
+    def generate_points(self):
+        next_positions = []
+        for i in range(self.num):
+            #TODO: move flags feature to the Mouse class (DONE)
             if i in self.flags:
                 next_positions.append(self.positions[0][i])
             else:
@@ -42,21 +55,36 @@ class Creature:
                 next_positions.append(next_pos)
         self.positions.append(next_positions)
 
-class Mouse(Creature):
-    def __init__(self, file_path='mice.txt', max_distance=2):
-        super().__init__(file_path, max_distance)
-
 #TODO: create classes for all types of cats
-class Cat(Creature):
+class Average_cat(Creature):
     def __init__(self, file_path='average_cats.txt', max_distance=2):
         super().__init__(file_path, max_distance)
+
+# TODO: override method for some creatures if needed
+class Kitten(Creature):
+    def __init__(self,file_path='kittens.txt', max_distance=5):
+        super().__init__(file_path, max_distance)
+
+    #TODO: next point isn't 100p further from startpos
+    def generate_points(self):
+        next_positions = []
+        for i in range(self.num):
+            y = self.positions[-1][i][1]
+            x = self.positions[-1][i][0]
+            next_pos = self.generate_next_point(x, y)
+            next_positions.append(next_pos)
+        self.positions.append(next_positions)
+#
+# class Lazy_cats(Creature):
+#     def __init__(self,file_path='lazy_cat.txt', max_distance=10):
+#         super().__init__(file_path, max_distance)
 
 class Simulation:
     def __init__(self, num_frames):
         self.num_frames = num_frames
         self.fig, self.ax = plt.subplots()
         self.mice = Mouse()
-        self.cats = Cat()
+        self.cats = Average_cat()
         self.render_point()
         self.mice_lines = []
         self.cats_lines = []
@@ -79,8 +107,6 @@ class Simulation:
                     cat_arr = np.array(cat)
                     distance = np.linalg.norm(mouse_arr - cat_arr)
                     if distance <= 10:
-
-                        # TODO: Set next point to start or even sever the chain to a new one (DONE: teleportation line is invisible)
                         self.mice.flags.append(index)
 
     def init_mice(self): #it d be better to init different creatures separately, also labels need to be repaired
