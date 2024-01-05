@@ -62,18 +62,30 @@ class Average_cat(Creature):
 
 # TODO: override method for some creatures if needed
 class Kitten(Creature):
-    def __init__(self,file_path='kittens.txt', max_distance=5):
+    def __init__(self, file_path='kittens.txt', max_distance=5):
         super().__init__(file_path, max_distance)
 
-    #TODO: next point isn't 100p further from startpos
     def generate_points(self):
         next_positions = []
         for i in range(self.num):
-            y = self.positions[-1][i][1]
-            x = self.positions[-1][i][0]
-            next_pos = self.generate_next_point(x, y)
-            next_positions.append(next_pos)
+            start_x, start_y = self.positions[0][i]
+
+            # Generate a new point
+            new_x, new_y = self.generate_next_point(start_x, start_y)
+
+            # Check if the distance exceeds the maximum allowed distance
+            distance = np.linalg.norm(np.array([new_x, new_y]) - np.array([start_x, start_y]))
+
+            # Adjust the new point if needed
+            if distance > 100:
+                angle = np.arctan2(new_y - start_y, new_x - start_x)
+                new_x = start_x + 100 * np.cos(angle)
+                new_y = start_y + 100 * np.sin(angle)
+
+            next_positions.append([new_x, new_y])
+
         self.positions.append(next_positions)
+
 #
 # class Lazy_cats(Creature):
 #     def __init__(self,file_path='lazy_cat.txt', max_distance=10):
@@ -85,6 +97,7 @@ class Simulation:
         self.fig, self.ax = plt.subplots()
         self.mice = Mouse()
         self.cats = Average_cat()
+        self.kittens = Kitten()
         self.render_point()
         self.mice_lines = []
         self.cats_lines = []
@@ -109,6 +122,7 @@ class Simulation:
                     if distance <= 10:
                         self.mice.flags.append(index)
 
+    #TODO: encapsulate methods where possible
     def init_mice(self): #it d be better to init different creatures separately, also labels need to be repaired
         self.mice_lines = [self.ax.plot([], [], color='blue', label='Mice')[0] for _ in range(self.mice.num)]
         return tuple(self.mice_lines)
