@@ -11,6 +11,7 @@ class Creature:
         self.positions.append(self.retrieve(file_path))
         self.max_distance = max_distance
         self.num = len(self.positions[0])
+        self.flags = [] #flags that represent indecies of mice that's close to cat
 
     def retrieve(self, file_path):
         start_pos = []
@@ -32,10 +33,13 @@ class Creature:
     def generate_points(self):
         next_positions = []
         for i in range(self.num):
-            x = self.positions[-1][i][0]
-            y = self.positions[-1][i][1]
-            next_pos = self.generate_next_point(x, y)
-            next_positions.append(next_pos)
+            if i in self.flags:
+                next_positions.append(self.positions[0][i])
+            else:
+                y = self.positions[-1][i][1]
+                x = self.positions[-1][i][0]
+                next_pos = self.generate_next_point(x, y)
+                next_positions.append(next_pos)
         self.positions.append(next_positions)
 
 class Mouse(Creature):
@@ -61,8 +65,10 @@ class Simulation:
     def render_point(self):
         #iterate through frames
         for i in range(1, self.num_frames):
+
             self.mice.generate_points()
             self.cats.generate_points()
+            self.mice.flags.clear()
 
             # Check for proximity and reset positions of mice if necessary
             # distance = np.linalg.norm(mouse - cat) #calculating the normal
@@ -75,7 +81,7 @@ class Simulation:
                     if distance <= 10:
 
                         # TODO: Set next point to start or even sever the chain to a new one (DONE: teleportation line is invisible)
-                        self.mice.positions[i][index] = self.mice.positions[0][index] #positions[+1] not yet created, so for pilot version it's i
+                        self.mice.flags.append(index)
 
     def init_mice(self): #it d be better to init different creatures separately, also labels need to be repaired
         self.mice_lines = [self.ax.plot([], [], color='blue', label='Mice')[0] for _ in range(self.mice.num)]
@@ -87,9 +93,6 @@ class Simulation:
 
     def update_mice(self, frame):
         for i in range(self.mice.num):
-            if (frame > 0 and self.mice.positions[frame][i] == self.mice.positions[0][i]):
-                self.mice_lines[i].set_data([],[])
-                continue
             positions = np.array(self.mice.positions)
             self.mice_lines[i].set_data(positions[:frame+1, i, 0], positions[:frame+1, i, 1])
         return tuple(self.mice_lines)
