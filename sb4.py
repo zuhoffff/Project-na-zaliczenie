@@ -4,24 +4,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
-from enum import Enum
 
 class PlotManager:
     def __init__(self):
         self.fig, self.ax = plt.subplots()
 
+    def set_axis(self, all_positions):
+        min_x = min(point[0] for frame_positions in all_positions for point in frame_positions)
+        max_x = max(point[0] for frame_positions in all_positions for point in frame_positions)
+        min_y = min(point[1] for frame_positions in all_positions for point in frame_positions)
+        max_y = max(point[1] for frame_positions in all_positions for point in frame_positions)
+
+        self.ax.set_xlim(min_x - 5, max_x + 5)
+        self.ax.set_ylim(min_y - 5, max_y + 5)
+
 class Creature:
-    def __init__(self, file_path, max_distance, color, label, plot_manager):
-        self.positions = []
-        self.positions.append(self.retrieve(file_path))
+    def __init__(self, plot_manager, file_path, max_distance, color, label):
+        self.plot_manager = plot_manager
+        self.positions = [self.retrieve(file_path)]
         self.max_distance = max_distance
         self.color = color
         self.label = label
         self.num = len(self.positions[0])
-        self.flags = []
         self.lines = []
         self.anim = []
-        self.plot_manager = plot_manager
 
     def retrieve(self, file_path):
         start_pos = []
@@ -54,13 +60,15 @@ class Creature:
         return tuple(self.lines)
 
     def update(self, frame):
+        arr_pos = np.array(self.positions)
         for i in range(self.num):
-            arr_pos = np.array(self.positions)
             self.lines[i].set_data(arr_pos[:frame + 1, i, 0], arr_pos[:frame + 1, i, 1])
         return tuple(self.lines)
 
     def draw_circles(self):
-        self.circles = [Circle((mouse[0], mouse[1]), radius=0.4, color='blue', label='Starting Point') for mouse in
+
+        #todo: color and radius needs to be changed for diff spicies
+        self.circles = [Circle((mouse[0], mouse[1]), radius=0.15, color='blue', label='Starting Point') for mouse in
                         self.positions[0]]
         return self.circles
 
@@ -73,8 +81,9 @@ class Creature:
         )
 
 class Mouse(Creature):
-    def __init__(self, file_path='mice.txt', max_distance=2, color='blue', label='Mice', plot_manager=None):
-        super().__init__(file_path, max_distance, color, label, plot_manager)
+    def __init__(self, plot_manager, file_path='mice.txt', max_distance=2, color='blue', label='Mice'):
+        super().__init__(plot_manager, file_path, max_distance, color, label)
+        self.flags = []
 
     def generate_points(self):
         next_positions = []
@@ -88,58 +97,46 @@ class Mouse(Creature):
                 next_positions.append(next_pos)
         self.positions.append(next_positions)
 
-class Average_cat(Creature):
-    def __init__(self, file_path='average_cats.txt', max_distance=2, color='red', label='average cats', plot_manager=None):
-        super().__init__(file_path, max_distance, color, label, plot_manager)
+class AverageCat(Creature):
+    def __init__(self, plot_manager, file_path='average_cats.txt', max_distance=2, color='red', label='average cats'):
+        super().__init__(plot_manager, file_path, max_distance, color, label)
+
+    def interact(self, other_creature):
+        for index, mouse in enumerate(other_creature.positions[-1]):
+            for cat in self.positions[-1]:
+                mouse_arr = np.array(mouse)
+                cat_arr = np.array(cat)
+                distance = np.linalg.norm(mouse_arr - cat_arr)
+                if distance <= 10:
+                    other_creature.flags.append(index)
 
 class Simulation:
-    def __init__(self, num_frames, plot_manager):
-        self.num_frames = num_frames
+    def __init__(self, plot_manager, num_frames):
         self.plot_manager = plot_manager
-        self.creatures = [Mouse(plot_manager=plot_manager), Average_cat(plot_manager=plot_manager)]
-        self.set_axis()
+        self.mice = Mouse(plot_manager)
+        self.cats = AverageCat(plot_manager)
+        self.num_frames = num_frames
+        self.render_points()
 
-    def render_point(self):
+    def render_points(self):
+        all_positions = self.mice.positions + self.cats.positions
         for i in range(1, self.num_frames):
-            for creature in self.creatures:
-                creature.generate_points()
-                creature.flags.clear()
+            self.mice.generate_points()
+            self.cats.generate_points()
+            self.mice.flags.clear()
+            self.cats.interact(self.mice)
 
-            for index, mouse in enumerate(self.creatures[0].positions[i]):
-                for cat in self.creatures[1].positions[i]:
-                    mouse_arr = np.array(mouse)
-                    cat_arr = np.array(cat)
-                    distance = np.linalg.norm(mouse_arr - cat_arr)
-                    if distance <= 10:
-                        creature.flags.append(index)
+        self.plot_manager.set_axis(all_positions)
 
     def animate(self):
-        for creature in self.creatures:
-            creature.animate(self.num_frames)
-
+        self.mice.animate(self.num_frames)
+        self.cats.animate(self.num_frames)
+        plt.legend()
         plt.show()
-
-    def set_axis(self):
-        min_x = float('inf')
-        max_x = float('-inf')
-        min_y = float('inf')
-        max_y = float('-inf')
-
-        for creature_type in self.creatures:
-            for frame in creature_type.positions:
-                for creature in frame:
-                    min_x = min(min_x, creature[0])
-                    max_x = max(max_x, creature[0])
-                    min_y = min(min_y, creature[1])
-                    max_y = max(max_y, creature[1])
-
-        self.plot_manager.ax.set_xlim(min_x - 5, max_x + 5)
-        self.plot_manager.ax.set_ylim(min_y - 5, max_y + 5)
 
 def main():
     plot_manager = PlotManager()
-    simulation = Simulation(num_frames=100, plot_manager=plot_manager)
-    simulation.render_point()
+    simulation = Simulation(plot_manager, num_frames=100)
     simulation.animate()
 
 if __name__ == '__main__':
