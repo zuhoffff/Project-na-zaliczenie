@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
+from enum import Enum
 
 class Creature:
     def __init__(self, file_path, max_distance, color, label):
@@ -45,7 +46,7 @@ class Creature:
 
     def init_plot(self):
         #todo: maybe ax should be used instead of plt, in this case it needs to be passed to this method or class
-        self.lines = [self.plt.plot([], [], color=self.color, label=self.label)[0] for _ in range(self.num)] #ax instead of plt
+        self.lines = [self.ax.plot([], [], color=self.color, label=self.label)[0] for _ in range(self.num)] #ax instead of plt
         return tuple(self.lines)
 
     def update(self, frame):
@@ -62,21 +63,18 @@ class Creature:
                    self.positions[0]]
         return circles
 
-    def animate(self):
-        #todo: pass ax and fig to the class OR move their initialization to this class
-        #todo: call the animate in the simulation class or in the creature class itself
-        for circle in self.circles:
-            self.ax.add_patch(circle)
-        cat_anim = [FuncAnimation(self.fig, self.cats.update(), frames=self.num_frames, init_func=self.cats.init, blit=False, interval=300)]
-        mouse_anim = [FuncAnimation(self.fig, self.mice.update(), frames=self.num_frames, init_func=self.mice.init, blit=False, interval=300)]
-        # plt.legend()
-        # self.set_axis()
-        plt.show()
+    def animate(self, ax, fig, num_frames):
+        for circle in self.draw_circles():
+            ax.add_patch(circle)
+
+        self.anim = FuncAnimation(
+            fig, self.update, frames=num_frames, init_func=self.init_plot, blit=False, interval=300
+        )
 
 
 class Mouse(Creature):
     def __init__(self, file_path='mice.txt', max_distance=2, color = 'blue', label = 'Mice'):
-        super().__init__(file_path, max_distance)
+        super().__init__(file_path, max_distance, color,label)
     def generate_points(self):
         next_positions = []
         for i in range(self.num):
@@ -93,7 +91,7 @@ class Mouse(Creature):
 #TODO: create classes for all types of cats
 class Average_cat(Creature):
     def __init__(self, file_path='average_cats.txt', max_distance=2, color='red',label='average cats'):
-        super().__init__(file_path, max_distance)
+        super().__init__(file_path, max_distance, color, label)
 
 # TODO: override method for some creatures if needed
 class Kitten(Creature):
@@ -114,52 +112,61 @@ class Kitten(Creature):
 #     def __init__(self,file_path='lazy_cat.txt', max_distance=10):
 #         super().__init__(file_path, max_distance)
 
+class CreatureType(Enum):
+    MICE = 0
+    CATS = 1
+
 class Simulation:
     def __init__(self, num_frames):
         self.num_frames = num_frames
         self.fig, self.ax = plt.subplots()
-        self.mice = Mouse()
-        self.cats = Average_cat()
-        self.render_point()
-        #self.circles = self.draw_circles()
+
+        # creatures -> creature_type -> frame -> creature -> x or y
+        self.creatures = {CreatureType.MICE: Mouse(), CreatureType.CATS: Average_cat()}
         self.set_axis()
 
     def render_point(self):
-        #iterate through frames
         for i in range(1, self.num_frames):
+            for creature_type, creature in self.creatures.items():
+                creature.generate_points()
+                creature.flags.clear()
 
-            self.mice.generate_points()
-            self.cats.generate_points()
-            self.mice.flags.clear()
+                # Check for proximity and reset positions if necessary
+                for idx, mouse in enumerate(self.creatures[CreatureType.MICE].positions[i]):
+                    for cat in self.creatures[CreatureType.CATS].positions[i]:
+                        mouse_arr = np.array(mouse)
+                        cat_arr = np.array(cat)
+                        distance = np.linalg.norm(mouse_arr - cat_arr)
+                        if distance <= 10:
+                            creature.flags.append(idx)
 
-            # Check for proximity and reset positions of mice if necessary
-            # distance = np.linalg.norm(mouse - cat) #calculating the normal
-            for index, mouse in enumerate(self.mice.positions[i]):
-                #index represents the current mouse
-                for cat in self.cats.positions[i]:
-                    mouse_arr = np.array(mouse)
-                    cat_arr = np.array(cat)
-                    distance = np.linalg.norm(mouse_arr - cat_arr)
-                    if distance <= 10:
-                        self.mice.flags.append(index)
+    def animate(self):
+        for creature_type, creature in self.creatures.items():
+            creature.animate(self.ax, self.fig, self.num_frames, creature_type)
+
+        plt.show()
 
     def set_axis(self):
-        # Extract all positions of mice and cats
-        all_positions = self.mice.positions + self.cats.positions
 
-        # Find the minimum and maximum values in x and y directions
-        min_x = min(point[0] for frame_positions in all_positions for point in frame_positions)
-        max_x = max(point[0] for frame_positions in all_positions for point in frame_positions)
-        min_y = min(point[1] for frame_positions in all_positions for point in frame_positions)
-        max_y = max(point[1] for frame_positions in all_positions for point in frame_positions)
+        min_x = float('inf')
+        max_x = float('-inf')
+        min_y = float('inf')
+        max_y = float('-inf')
 
-        # Set the axis limits based on the min and max values
+        for creature_type in self.creatures:
+            for frame in creature_type.positions:
+                for creature in frame:
+                    min_x = min(min_x, creature[0])
+                    max_x = max(max_x, creature[0])
+                    min_y = min(min_y, creature[1])
+                    max_y = max(max_y, creature[1])
+
         self.ax.set_xlim(min_x - 5, max_x + 5)
         self.ax.set_ylim(min_y - 5, max_y + 5)
 
-
 def main():
     simulation = Simulation(num_frames=100)
+    simulation.render_point()
     simulation.animate()
 
 if __name__ == '__main__':
