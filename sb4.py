@@ -9,11 +9,20 @@ class PlotManager:
     def __init__(self):
         self.fig, self.ax = plt.subplots()
 
-    def set_axis(self, all_positions):
-        min_x = min(point[0] for frame_positions in all_positions for point in frame_positions)
-        max_x = max(point[0] for frame_positions in all_positions for point in frame_positions)
-        min_y = min(point[1] for frame_positions in all_positions for point in frame_positions)
-        max_y = max(point[1] for frame_positions in all_positions for point in frame_positions)
+    def set_axis(self, allpos):
+
+        min_x = float('inf')
+        max_x = float('-inf')
+        min_y = float('inf')
+        max_y = float('-inf')
+
+        for creature_type in allpos:
+            for frame in creature_type:
+                for creature in frame:
+                    min_x = min(min_x, creature[0])
+                    max_x = max(max_x, creature[0])
+                    min_y = min(min_y, creature[1])
+                    max_y = max(max_y, creature[1])
 
         self.ax.set_xlim(min_x - 5, max_x + 5)
         self.ax.set_ylim(min_y - 5, max_y + 5)
@@ -68,7 +77,7 @@ class Creature:
     def draw_circles(self):
 
         #todo: color and radius needs to be changed for diff spicies
-        self.circles = [Circle((mouse[0], mouse[1]), radius=0.15, color='blue', label='Starting Point') for mouse in
+        self.circles = [Circle((mouse[0], mouse[1]), radius=0.15, color=self.color, label='Starting Point') for mouse in
                         self.positions[0]]
         return self.circles
 
@@ -119,7 +128,7 @@ class Simulation:
         self.render_points()
 
     def render_points(self):
-        all_positions = self.mice.positions + self.cats.positions
+        all_positions = [self.mice.positions, self.cats.positions]
         for i in range(1, self.num_frames):
             self.mice.generate_points()
             self.cats.generate_points()
