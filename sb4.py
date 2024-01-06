@@ -6,12 +6,16 @@ from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
 
 class Creature:
-    def __init__(self, file_path, max_distance):
+    def __init__(self, file_path, max_distance, color, label):
         self.positions = []
         self.positions.append(self.retrieve(file_path))
         self.max_distance = max_distance
+        self.color = color
+        self.label = label
         self.num = len(self.positions[0])
-        self.flags = []  # flags that represent indices of mice that are close to a cat
+        self.flags = [] #flags that represent indecies of mice that's close to cat
+        self.lines = []
+        self.anim = []
 
     def retrieve(self, file_path):
         start_pos = []
@@ -39,20 +43,44 @@ class Creature:
             next_positions.append(next_pos)
         self.positions.append(next_positions)
 
-    def init_creature(self, ax):
-        raise NotImplementedError("init_creature method must be implemented in each creature class")
+    def init_plot(self):
+        #todo: maybe ax should be used instead of plt, in this case it needs to be passed to this method or class
+        self.lines = [self.plt.plot([], [], color=self.color, label=self.label)[0] for _ in range(self.num)] #ax instead of plt
+        return tuple(self.lines)
 
-    def update_creature(self, frame):
-        raise NotImplementedError("update_creature method must be implemented in each creature class")
+    def update(self, frame):
+        for i in range(self.num):
+            arr_pos = np.array(self.positions)
+            self.lines[i].set_data(arr_pos[:frame + 1, i, 0], arr_pos[:frame + 1, i, 1])
+        return tuple(self.lines)
+
+    def draw_circles(self):
+        #todo: rewrite method for new class, call method in subclass  (?)
+        self.circles = []
+        #Create circles for each starting point
+        circles = [Circle((mouse[0], mouse[1]), radius=0.4, color='blue', label='Starting Point') for mouse in
+                   self.positions[0]]
+        return circles
+
+    def animate(self):
+        #todo: pass ax and fig to the class OR move their initialization to this class
+        #todo: call the animate in the simulation class or in the creature class itself
+        for circle in self.circles:
+            self.ax.add_patch(circle)
+        cat_anim = [FuncAnimation(self.fig, self.cats.update(), frames=self.num_frames, init_func=self.cats.init, blit=False, interval=300)]
+        mouse_anim = [FuncAnimation(self.fig, self.mice.update(), frames=self.num_frames, init_func=self.mice.init, blit=False, interval=300)]
+        # plt.legend()
+        # self.set_axis()
+        plt.show()
 
 
 class Mouse(Creature):
-    def __init__(self, file_path='mice.txt', max_distance=2):
+    def __init__(self, file_path='mice.txt', max_distance=2, color = 'blue', label = 'Mice'):
         super().__init__(file_path, max_distance)
-
     def generate_points(self):
         next_positions = []
         for i in range(self.num):
+            #TODO: move flags feature to the Mouse class (DONE)
             if i in self.flags:
                 next_positions.append(self.positions[0][i])
             else:
@@ -62,131 +90,77 @@ class Mouse(Creature):
                 next_positions.append(next_pos)
         self.positions.append(next_positions)
 
-    def init_creature(self, ax):
-        lines = [ax.plot([], [], color='blue')[0] for _ in range(self.num)]
-        return tuple(lines)
-
-    def update_creature(self, frame):
-        for i in range(self.num):
-            positions = np.array(self.positions)
-            self.lines[i].set_data(positions[:frame + 1, i, 0], positions[:frame + 1, i, 1])
-        return tuple(self.lines)
-
-
-class AverageCat(Creature):
-    def __init__(self, file_path='average_cats.txt', max_distance=2):
+#TODO: create classes for all types of cats
+class Average_cat(Creature):
+    def __init__(self, file_path='average_cats.txt', max_distance=2, color='red',label='average cats'):
         super().__init__(file_path, max_distance)
 
-    def init_creature(self, ax):
-        lines = [ax.plot([], [], color='red')[0] for _ in range(self.num)]
-        return tuple(lines)
-
-    def update_creature(self, frame):
-        for i in range(self.num):
-            positions = np.array(self.positions)
-            self.lines[i].set_data(positions[:frame + 1, i, 0], positions[:frame + 1, i, 1])
-        return tuple(self.lines)
-
-
+# TODO: override method for some creatures if needed
 class Kitten(Creature):
-    def __init__(self, file_path='kittens.txt', max_distance=5):
+    def __init__(self,file_path='kittens.txt', max_distance=5):
         super().__init__(file_path, max_distance)
 
+    #TODO: next point isn't 100p further from startpos
     def generate_points(self):
         next_positions = []
         for i in range(self.num):
-            start_x, start_y = self.positions[0][i]
-            new_x, new_y = self.generate_next_point(start_x, start_y)
-
-            # Check if the distance exceeds the maximum allowed distance
-            distance = np.linalg.norm(np.array([new_x, new_y]) - np.array([start_x, start_y]))
-
-            # Adjust the new point if needed
-            if distance > 100:
-                angle = np.arctan2(new_y - start_y, new_x - start_x)
-                new_x = start_x + 100 * np.cos(angle)
-                new_y = start_y + 100 * np.sin(angle)
-
-            next_positions.append([new_x, new_y])
-
+            y = self.positions[-1][i][1]
+            x = self.positions[-1][i][0]
+            next_pos = self.generate_next_point(x, y)
+            next_positions.append(next_pos)
         self.positions.append(next_positions)
-
-    def init_creature(self, ax):
-        lines = [ax.plot([], [], color='green')[0] for _ in range(self.num)]
-        return tuple(lines)
-
-    def update_creature(self, frame):
-        for i in range(self.num):
-            positions = np.array(self.positions)
-            self.lines[i].set_data(positions[:frame + 1, i, 0], positions[:frame + 1, i, 1])
-        return tuple(self.lines)
-
+#
+# class Lazy_cats(Creature):
+#     def __init__(self,file_path='lazy_cat.txt', max_distance=10):
+#         super().__init__(file_path, max_distance)
 
 class Simulation:
     def __init__(self, num_frames):
         self.num_frames = num_frames
         self.fig, self.ax = plt.subplots()
-        self.creatures = [Mouse(), AverageCat(), Kitten()]
+        self.mice = Mouse()
+        self.cats = Average_cat()
         self.render_point()
-        self.lines = []
-        self.circles = self.draw_circles()
+        #self.circles = self.draw_circles()
+        self.set_axis()
 
     def render_point(self):
-        # iterate through frames
+        #iterate through frames
         for i in range(1, self.num_frames):
-            for creature in self.creatures:
-                creature.generate_points()
-                creature.flags.clear()
 
-                # Check for proximity and reset positions of mice if necessary
-                for index, mouse in enumerate(creature.positions[i]):
-                    for cat in self.creatures[1].positions[i]:  # Assuming the second creature is a cat
-                        mouse_arr = np.array(mouse)
-                        cat_arr = np.array(cat)
-                        distance = np.linalg.norm(mouse_arr - cat_arr)
-                        if distance <= 10:
-                            creature.flags.append(index)
+            self.mice.generate_points()
+            self.cats.generate_points()
+            self.mice.flags.clear()
 
-    def init_creatures(self):
-        self.lines = []
-        for creature in self.creatures:
-            self.lines.extend(creature.init_creature(self.ax))
-        return tuple(self.lines)
-
-    def update_creatures(self, frame):
-        all_lines = []
-        for creature in self.creatures:
-            all_lines.extend(creature.update_creature(frame))
-        return tuple(all_lines)
-
-    def animate(self):
-        for circle in self.circles:
-            self.ax.add_patch(circle)
-        anim = FuncAnimation(self.fig, self.update_creatures, frames=self.num_frames,
-                             init_func=self.init_creatures, blit=False, interval=300)
-        self.set_axis()
-        plt.show()
+            # Check for proximity and reset positions of mice if necessary
+            # distance = np.linalg.norm(mouse - cat) #calculating the normal
+            for index, mouse in enumerate(self.mice.positions[i]):
+                #index represents the current mouse
+                for cat in self.cats.positions[i]:
+                    mouse_arr = np.array(mouse)
+                    cat_arr = np.array(cat)
+                    distance = np.linalg.norm(mouse_arr - cat_arr)
+                    if distance <= 10:
+                        self.mice.flags.append(index)
 
     def set_axis(self):
-        all_positions = [creature.positions for creature in self.creatures]
+        # Extract all positions of mice and cats
+        all_positions = self.mice.positions + self.cats.positions
+
+        # Find the minimum and maximum values in x and y directions
         min_x = min(point[0] for frame_positions in all_positions for point in frame_positions)
         max_x = max(point[0] for frame_positions in all_positions for point in frame_positions)
         min_y = min(point[1] for frame_positions in all_positions for point in frame_positions)
         max_y = max(point[1] for frame_positions in all_positions for point in frame_positions)
 
+        # Set the axis limits based on the min and max values
         self.ax.set_xlim(min_x - 5, max_x + 5)
         self.ax.set_ylim(min_y - 5, max_y + 5)
-
-    def draw_circles(self):
-        circles = [Circle((mouse[0], mouse[1]), radius=0.4, color='blue', label='Starting Point') for mouse in
-                   self.creatures[0].positions[0]]
-        return circles
 
 
 def main():
     simulation = Simulation(num_frames=100)
     simulation.animate()
-
 
 if __name__ == '__main__':
     main()
