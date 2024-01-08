@@ -27,8 +27,9 @@ class PlotManager:
         self.ax.set_xlim(min_x - 5, max_x + 5)
         self.ax.set_ylim(min_y - 5, max_y + 5)
 
+#todo: handle labels
 class Creature:
-    def __init__(self, plot_manager, file_path, max_distance, color, label):
+    def __init__(self, plot_manager, file_path, max_distance, color, label, radius):
         self.plot_manager = plot_manager
         self.positions = [self.retrieve(file_path)]
         self.max_distance = max_distance
@@ -37,6 +38,7 @@ class Creature:
         self.num = len(self.positions[0])
         self.lines = []
         self.anim = []
+        self.radius = radius
 
     def retrieve(self, file_path):
         start_pos = []
@@ -47,8 +49,9 @@ class Creature:
                 start_pos.append(start_position)
         return start_pos
 
-    def generate_next_point(self, x, y):
-        angle = np.random.uniform(0, 2 * np.pi)
+    def generate_next_point(self, x, y, angle = None):
+        if angle == None:
+            angle = np.random.uniform(0, 2 * np.pi)
         distance = np.random.uniform(0, self.max_distance)
         new_x = x + distance * np.cos(angle)
         new_y = y + distance * np.sin(angle)
@@ -75,9 +78,7 @@ class Creature:
         return tuple(self.lines)
 
     def draw_circles(self):
-
-        #todo: color and radius needs to be changed for diff spicies
-        self.circles = [Circle((mouse[0], mouse[1]), radius=0.15, color=self.color, label='Starting Point') for mouse in
+        self.circles = [Circle((creature[0], creature[1]), radius=self.radius, color=self.color, label='Starting Point') for creature in
                         self.positions[0]]
         return self.circles
 
@@ -90,8 +91,8 @@ class Creature:
         )
 
 class Mouse(Creature):
-    def __init__(self, plot_manager, file_path='mice.txt', max_distance=2, color='blue', label='Mice'):
-        super().__init__(plot_manager, file_path, max_distance, color, label)
+    def __init__(self, plot_manager, file_path='mice.txt', max_distance=2, color='blue', label='Mice', radius = 0.15):
+        super().__init__(plot_manager, file_path, max_distance, color, label,radius)
         self.flags = []
 
     def generate_points(self):
@@ -100,46 +101,76 @@ class Mouse(Creature):
             if i in self.flags:
                 next_positions.append(self.positions[0][i])
             else:
-                y = self.positions[-1][i][1]
                 x = self.positions[-1][i][0]
+                y = self.positions[-1][i][1]
                 next_pos = self.generate_next_point(x, y)
                 next_positions.append(next_pos)
         self.positions.append(next_positions)
 
 class AverageCat(Creature):
-    def __init__(self, plot_manager, file_path='average_cats.txt', max_distance=2, color='red', label='average cats'):
-        super().__init__(plot_manager, file_path, max_distance, color, label)
+    def __init__(self, plot_manager, file_path='average_cats.txt', max_distance=10, color='red', label='average cats', radius = 0):
+        super().__init__(plot_manager, file_path, max_distance, color, label, radius)
 
-    def interact(self, other_creature):
-        for index, mouse in enumerate(other_creature.positions[-1]):
-            for cat in self.positions[-1]:
-                mouse_arr = np.array(mouse)
-                cat_arr = np.array(cat)
-                distance = np.linalg.norm(mouse_arr - cat_arr)
-                if distance <= 10:
-                    other_creature.flags.append(index)
+class Kitten(Creature):
+
+    def __init__(self, plot_manager, file_path='kittens.txt', max_distance=5, color='purple', label='kittens', radius = 0.15):
+        super().__init__(plot_manager, file_path, max_distance, color, label, radius)
+
+    #todo: simplify the function below
+    def generate_points(self):
+        next_positions = []
+        for i in range(self.num):
+            start_x, start_y = self.positions[0][i]
+            x = self.positions[-1][i][0]
+            y = self.positions[-1][i][1]
+            new_x, new_y = self.generate_next_point(x, y)
+
+            # Check if the distance exceeds the maximum allowed distance
+            distance = np.linalg.norm(np.array([new_x, new_y]) - np.array([start_x, start_y]))
+
+            # Adjust the new point if needed
+            if distance > 100:
+                angle = np.arctan2(new_y - start_y, new_x - start_x)
+                new_x = start_x + 100 * np.cos(angle)
+                new_y = start_y + 100 * np.sin(angle)
+
+            next_positions.append([new_x, new_y])
+
+        self.positions.append(next_positions)
 
 class Simulation:
     def __init__(self, plot_manager, num_frames):
         self.plot_manager = plot_manager
         self.mice = Mouse(plot_manager)
         self.cats = AverageCat(plot_manager)
+        self.kittens = Kitten(plot_manager)
         self.num_frames = num_frames
         self.render_points()
 
+    def interact(self):
+        for index, mouse in enumerate(self.mice.positions[-1]):
+            for cat in self.cats.positions[-1]:
+                mouse_arr = np.array(mouse)
+                cat_arr = np.array(cat)
+                distance = np.linalg.norm(mouse_arr - cat_arr)
+                if distance <= 10:
+                    self.mice.flags.append(index)
+
     def render_points(self):
-        all_positions = [self.mice.positions, self.cats.positions]
+        all_positions = [self.mice.positions, self.cats.positions, self.kittens.positions]
         for i in range(1, self.num_frames):
             self.mice.generate_points()
             self.cats.generate_points()
+            self.kittens.generate_points()
             self.mice.flags.clear()
-            self.cats.interact(self.mice)
+            self.interact()
 
         self.plot_manager.set_axis(all_positions)
 
     def animate(self):
         self.mice.animate(self.num_frames)
         self.cats.animate(self.num_frames)
+        self.kittens.animate(self.num_frames)
         plt.legend()
         plt.show()
 
