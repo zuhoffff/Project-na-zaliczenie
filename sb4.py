@@ -9,14 +9,13 @@ class PlotManager:
     def __init__(self):
         self.fig, self.ax = plt.subplots()
 
-    def set_axis(self, allpos):
-
+    def set_axis(self, all_positions):
         min_x = float('inf')
         max_x = float('-inf')
         min_y = float('inf')
         max_y = float('-inf')
 
-        for creature_type in allpos:
+        for creature_type in all_positions:
             for frame in creature_type:
                 for creature in frame:
                     min_x = min(min_x, creature[0])
@@ -27,7 +26,6 @@ class PlotManager:
         self.ax.set_xlim(min_x - 5, max_x + 5)
         self.ax.set_ylim(min_y - 5, max_y + 5)
 
-#todo: handle labels
 class Creature:
     def __init__(self, plot_manager, file_path, max_distance, color, label, radius):
         self.plot_manager = plot_manager
@@ -49,8 +47,8 @@ class Creature:
                 start_pos.append(start_position)
         return start_pos
 
-    def generate_next_point(self, x, y, angle = None):
-        if angle == None:
+    def generate_next_point(self, x, y, angle=None):
+        if angle is None:
             angle = np.random.uniform(0, 2 * np.pi)
         distance = np.random.uniform(0, self.max_distance)
         new_x = x + distance * np.cos(angle)
@@ -69,6 +67,7 @@ class Creature:
 
     def init_plot(self):
         self.lines = [self.plot_manager.ax.plot([], [], color=self.color, label=self.label)[0] for _ in range(self.num)]
+        self.lines[0].set_label(self.label)
         return tuple(self.lines)
 
     def update(self, frame):
@@ -77,36 +76,22 @@ class Creature:
             self.lines[i].set_data(arr_pos[:frame + 1, i, 0], arr_pos[:frame + 1, i, 1])
         return tuple(self.lines)
 
-    def draw_circles(self):
-        self.circles = [Circle((creature[0], creature[1]), radius=self.radius, color=self.color) for creature in
+    def draw_circles(self, circle_label):
+        self.circles = [Circle((creature[0], creature[1]), radius=self.radius, color=self.color, label=None) for creature in
                         self.positions[0]]
-        self.circles[0].set_label('Staring position')
+        self.circles[0].set_label(circle_label)
         return self.circles
 
-    def animate(self, num_frames, lines_labels):
-        for circle in self.draw_circles():
+    def animate(self, num_frames):
+        for circle in self.draw_circles('Starting Position'):
             self.plot_manager.ax.add_patch(circle)
 
-        lines = [self.plot_manager.ax.plot([], [], color=self.color)[0] for _ in range(self.num)]
-        lines_labels.extend([f"{self.label} {i + 1}" for i in range(self.num)])
-
-        def init():
-            for line in lines:
-                line.set_data([], [])
-            return lines
-
-        def update(frame):
-            arr_pos = np.array(self.positions)
-            for i in range(self.num):
-                lines[i].set_data(arr_pos[:frame + 1, i, 0], arr_pos[:frame + 1, i, 1])
-            return lines
-
         self.anim = FuncAnimation(
-            self.plot_manager.fig, update, frames=num_frames, init_func=init, blit=False, interval=300
+            self.plot_manager.fig, self.update, frames=num_frames, init_func=self.init_plot, blit=False, interval=300
         )
 
 class Mouse(Creature):
-    def __init__(self, plot_manager, file_path='mice.txt', max_distance=2, color='blue', label='Mice', radius = 0.15):
+    def __init__(self, plot_manager, file_path='mice.txt', max_distance=2, color='blue', label='Mice', radius=0.15):
         super().__init__(plot_manager, file_path, max_distance, color, label, radius)
         self.flags = []
 
@@ -123,15 +108,15 @@ class Mouse(Creature):
         self.positions.append(next_positions)
 
 class AverageCat(Creature):
-    def __init__(self, plot_manager, file_path='average_cats.txt', max_distance=10, color='red', label='average cats', radius = 0):
+    def __init__(self, plot_manager, file_path='average_cats.txt', max_distance=10, color='red', label='average cats',
+                 radius=0):
         super().__init__(plot_manager, file_path, max_distance, color, label, radius)
 
 class Kitten(Creature):
-
-    def __init__(self, plot_manager, file_path='kittens.txt', max_distance=5, color='purple', label='kittens', radius=0.15):
+    def __init__(self, plot_manager, file_path='kittens.txt', max_distance=5, color='purple', label='kittens',
+                 radius=0.15):
         super().__init__(plot_manager, file_path, max_distance, color, label, radius)
 
-    #todo: simplify the function below
     def generate_points(self):
         next_positions = []
         for i in range(self.num):
@@ -160,7 +145,6 @@ class Simulation:
         self.cats = AverageCat(plot_manager)
         self.kittens = Kitten(plot_manager)
         self.num_frames = num_frames
-        self.lines_labels = []  # List to store labels for all lines
         self.render_points()
 
     def interact(self):
@@ -184,13 +168,10 @@ class Simulation:
         self.plot_manager.set_axis(all_positions)
 
     def animate(self):
-        self.mice.animate(self.num_frames, self.lines_labels)
-        self.cats.animate(self.num_frames, self.lines_labels)
-        self.kittens.animate(self.num_frames, self.lines_labels)
-
-        # Set the legend using the collected lines labels
-        self.plot_manager.ax.legend(self.lines_labels, loc='upper right')
-
+        self.mice.animate(self.num_frames)
+        self.cats.animate(self.num_frames)
+        self.kittens.animate(self.num_frames)
+        plt.legend()
         plt.show()
 
 def main():
