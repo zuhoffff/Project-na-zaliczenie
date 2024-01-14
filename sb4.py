@@ -1,3 +1,5 @@
+import math
+
 import matplotlib
 matplotlib.use('Qt5Agg')
 import numpy as np
@@ -173,12 +175,31 @@ class Kitten(Creature):
 
         self.positions.append(next_positions)
 
+class LazyCat(Creature):
+    def __init__(self, plot_manager, file_path='lazy_cats.txt', max_distance=10, color='green', label='Lazy cats', radius=0.15):
+        super().__init__(plot_manager, file_path, max_distance, color, label, radius)
+        self.streak = 0
+        self.interaction_probability = 1/(1+math.e**(-0.1*self.streak))
+
+    def interact(self, other):
+        for index, mouse in enumerate(other.positions[-1]):
+            for lazy_cat in self.positions[-1]:
+                lazy_cat = np.array(lazy_cat)
+                mouse = np.array(mouse)
+                distance = np.linalg.norm(lazy_cat - mouse)
+                if self.interaction_probability:
+                    if distance <= 10:
+                        other.flags.append(index)
+
+        return None
+
 class Simulation:
     def __init__(self, plot_manager, num_frames):
         self.plot_manager = plot_manager
         self.mice = Mouse(plot_manager)
         self.cats = AverageCat(plot_manager)
         self.kittens = Kitten(plot_manager)
+        self.lazy_cats = LazyCat(plot_manager)
         self.num_frames = num_frames
         self.render_points()
 
@@ -186,16 +207,18 @@ class Simulation:
         interaction_index = creature1.interact(creature2)
 
     def render_points(self):
-        all_positions = [self.mice.positions, self.cats.positions, self.kittens.positions]
+        all_positions = [self.mice.positions, self.cats.positions, self.kittens.positions, self.lazy_cats.positions]
         for i in range(1, self.num_frames):
             self.mice.generate_points()
             self.cats.generate_points()
             self.kittens.generate_points()
+            self.lazy_cats.generate_points()
             self.mice.flags.clear()
 
             # Interactions  todo: handle the priority of interactions
             self.interact(self.mice, self.cats)
-            self.interact(self.kittens, self.mice) ##works correctly only in such order!
+            self.interact(self.kittens, self.mice) #todo: fix that it works correctly only in such order!
+            self.interact(self.lazy_cats, self.mice)
 
         self.plot_manager.set_axis(all_positions)
 
@@ -203,6 +226,7 @@ class Simulation:
         self.mice.animate(self.num_frames)
         self.cats.animate(self.num_frames)
         self.kittens.animate(self.num_frames)
+        self.lazy_cats.animate(self.num_frames)
         plt.legend()
         plt.show()
 
