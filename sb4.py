@@ -1,5 +1,4 @@
 import math
-
 import matplotlib
 matplotlib.use('Qt5Agg')
 import numpy as np
@@ -40,14 +39,21 @@ class Creature:
         self.lines = []
         self.anim = []
         self.radius = radius
+        self.valid_data = bool(self.positions[0])
 
     def retrieve(self, file_path):
         start_pos = []
-        with open(file_path, 'r') as file:
-            for line in file:
-                words = line.strip().split()
-                start_position = [float(words[0]), float(words[1])]
-                start_pos.append(start_position)
+        try:
+            with open(file_path, 'r') as file:
+                for line in file:
+                    words = line.strip().split()
+                    start_position = [float(words[0]), float(words[1])]
+                    start_pos.append(start_position)
+        except (FileNotFoundError, IndexError, ValueError):
+            # Handle file not found or incorrect format
+            print(f"Error reading {file_path}. Skipping creature type.")
+            self.valid_data = False
+            return []
         return start_pos
 
     def generate_next_point(self, x, y, angle=None):
@@ -124,7 +130,7 @@ class Mouse(Creature):
         self.positions.append(next_positions)
 
 class AverageCat(Creature):
-    def __init__(self, plot_manager, file_path='average_cats.txt', max_distance=10, color='red', label='average cats',
+    def __init__(self, plot_manager, file_path='average_cats.txt', max_distance=10, color='red', label='Average cats',
                  radius=0):
         super().__init__(plot_manager, file_path, max_distance, color, label, radius)
 
@@ -196,10 +202,12 @@ class LazyCat(Creature):
 class Simulation:
     def __init__(self, plot_manager, num_frames):
         self.plot_manager = plot_manager
-        self.mice = Mouse(plot_manager)
-        self.cats = AverageCat(plot_manager)
-        self.kittens = Kitten(plot_manager)
-        self.lazy_cats = LazyCat(plot_manager)
+        self.creatures = [
+            Mouse(plot_manager),#0
+            AverageCat(plot_manager),#1
+            Kitten(plot_manager),#2
+            LazyCat(plot_manager)#3
+        ]
         self.num_frames = num_frames
         self.render_points()
 
@@ -207,26 +215,26 @@ class Simulation:
         interaction_index = creature1.interact(creature2)
 
     def render_points(self):
-        all_positions = [self.mice.positions, self.cats.positions, self.kittens.positions, self.lazy_cats.positions]
+        all_positions = [creature.positions for creature in self.creatures]
         for i in range(1, self.num_frames):
-            self.mice.generate_points()
-            self.cats.generate_points()
-            self.kittens.generate_points()
-            self.lazy_cats.generate_points()
-            self.mice.flags.clear()
+            for creature in self.creatures:
+                if creature.valid_data:
+                    creature.generate_points()
+
+            self.creatures[0].flags.clear()
+            self.creatures[2].flags.clear()
 
             # Interactions  todo: handle the priority of interactions
-            self.interact(self.mice, self.cats)
-            self.interact(self.kittens, self.mice) #todo: fix that it works correctly only in such order!
-            self.interact(self.lazy_cats, self.mice)
+            self.interact(self.creatures[0], self.creatures[1])
+            self.interact(self.creatures[2], self.creatures[0])
+            self.interact(self.creatures[3], self.creatures[0])
 
         self.plot_manager.set_axis(all_positions)
 
     def animate(self):
-        self.mice.animate(self.num_frames)
-        self.cats.animate(self.num_frames)
-        self.kittens.animate(self.num_frames)
-        self.lazy_cats.animate(self.num_frames)
+        for creature in self.creatures:
+            if creature.valid_data:
+                creature.animate(self.num_frames)
         plt.legend()
         plt.show()
 
