@@ -1,5 +1,4 @@
 import math
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -246,7 +245,7 @@ class CustomMainWindow(QMainWindow):
         self.simulation = simulation
 
         # Set up the main window
-        self.setWindowTitle("Customized Window Title")
+        self.setWindowTitle("Mice and cats simulation")
         self.setGeometry(100, 100, 800, 600)
 
         # Create a central widget
@@ -261,12 +260,26 @@ class CustomMainWindow(QMainWindow):
         layout.addWidget(canvas)
 
         # Add a button to start the animation
-        start_button = QPushButton("Start Animation", self)
-        start_button.clicked.connect(self.start_animation)
-        layout.addWidget(start_button)
+        self.start_button = QPushButton("Start Animation", self)
+        self.start_button.clicked.connect(self.start_animation)
+        layout.addWidget(self.start_button)
+
+        # Add a button to save the animation
+        save_button = QPushButton("Save Animation", self)
+        save_button.clicked.connect(self.save_animation)
+        layout.addWidget(save_button)
 
     def start_animation(self):
         self.simulation.animate()
+        self.start_button.hide()
+
+    def save_animation(self):
+        if self.simulation.creatures[0].valid_data:
+            file_path = "animation.gif"
+            self.simulation.plot_manager.fig.savefig(file_path, dpi=300, bbox_inches='tight', format='gif', writer='imagemagick')
+            print(f"Animation saved to {file_path}")
+        else:
+            print("No valid data to save.")
 
 def main():
     plot_manager = PlotManager()
