@@ -1,12 +1,12 @@
 import math
 import matplotlib
-matplotlib.use('Qt5Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.animation import FuncAnimation
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-#todo: craches if there is no creatures of any type
 class PlotManager:
     def __init__(self):
         self.fig, self.ax = plt.subplots()
@@ -238,10 +238,49 @@ class Simulation:
         plt.legend()
         plt.show()
 
+class CustomMainWindow(QMainWindow):
+    def __init__(self, plot_manager, simulation):
+        super(CustomMainWindow, self).__init__()
+
+        self.plot_manager = plot_manager
+        self.simulation = simulation
+
+        # Set up the main window
+        self.setWindowTitle("Customized Window Title")
+        self.setGeometry(100, 100, 800, 600)
+
+        # Create a central widget
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        # Add a layout to the central widget
+        layout = QVBoxLayout(central_widget)
+
+        # Embed the matplotlib figure in the Qt window
+        canvas = FigureCanvas(self.plot_manager.fig)
+        layout.addWidget(canvas)
+
+        # Add a button to start the animation
+        start_button = QPushButton("Start Animation", self)
+        start_button.clicked.connect(self.start_animation)
+        layout.addWidget(start_button)
+
+    def start_animation(self):
+        self.simulation.animate()
+
 def main():
     plot_manager = PlotManager()
     simulation = Simulation(plot_manager, num_frames=100)
-    simulation.animate()
+
+    # Create the Qt application and window
+    app = QApplication([])
+    window = CustomMainWindow(plot_manager, simulation)
+
+    # Show the window
+    window.show()
+
+    # Start the Qt application event loop
+    app.exec_()
 
 if __name__ == '__main__':
     main()
